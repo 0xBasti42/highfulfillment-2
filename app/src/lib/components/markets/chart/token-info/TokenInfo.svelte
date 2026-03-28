@@ -60,9 +60,9 @@
 		{ label: '24h volume', value: '£ 33,894,612' },
 		{ label: 'Staked', value: '£ 3,954,354' },
 		{ label: 'Points', value: '1169 (1st)' },
-		{ label: 'pEST', value: '♢ 1.3012' },
-		{ label: 'Funding', value: '+0.03%' },
-		{ label: 'Utilization', value: '24.56%' }
+		{ label: 'UR', value: '24.56%' },
+		{ label: 'ePBR', value: '♢ 1.3012' },
+		{ label: 'Funding Rate', value: '+0.03%' }
 	];
 </script>
 
