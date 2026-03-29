@@ -7,12 +7,20 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 /// @notice Minimal read surface for integrations that only need lookups and enumeration.
 interface IAddressProvider {
     function version() external view returns (uint256);
-    function get(bytes32 key) external view returns (address);
-    function getByName(string calldata name) external view returns (address);
+    function get(
+        bytes32 key
+    ) external view returns (address);
+    function getByName(
+        string calldata name
+    ) external view returns (address);
     function keyCount() external view returns (uint256);
-    function keyAt(uint256 index) external view returns (bytes32);
+    function keyAt(
+        uint256 index
+    ) external view returns (bytes32);
     function keys() external view returns (bytes32[] memory);
-    function label(bytes32 key) external view returns (string memory);
+    function label(
+        bytes32 key
+    ) external view returns (string memory);
 }
 
 /// @title HighPotential Address Provider
@@ -29,13 +37,7 @@ contract AddressBook is AccessControl {
     mapping(bytes32 key => address) private _addr;
     mapping(bytes32 key => string) private _label;
 
-    event AddressSet(
-        uint256 indexed version,
-        bytes32 indexed key,
-        string name,
-        address previous,
-        address current
-    );
+    event AddressSet(uint256 indexed version, bytes32 indexed key, string name, address previous, address current);
 
     error ZeroDefaultAdmin();
     error ZeroKey();
@@ -43,7 +45,9 @@ contract AddressBook is AccessControl {
     error NameKeyMismatch();
     error AddressAlreadyBound(bytes32 key, address current);
 
-    constructor(address defaultAdmin) {
+    constructor(
+        address defaultAdmin
+    ) {
         if (defaultAdmin == address(0)) revert ZeroDefaultAdmin();
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(ADDRESS_MANAGER_ROLE, defaultAdmin);
@@ -51,14 +55,21 @@ contract AddressBook is AccessControl {
     }
 
     /// @notice Upsert by human-readable `name`. Storage key is `keccak256(bytes(name))`.
-    function setName(string calldata name, address addr) external onlyRole(ADDRESS_MANAGER_ROLE) {
+    function setName(
+        string calldata name,
+        address addr
+    ) external onlyRole(ADDRESS_MANAGER_ROLE) {
         if (bytes(name).length == 0) revert EmptyName();
         bytes32 key = keccak256(bytes(name));
         _set(key, addr, name);
     }
 
     /// @notice Upsert by raw key. Non-empty `name` must satisfy `keccak256(bytes(name)) == key`; use "" to keep the existing label.
-    function setKey(bytes32 key, address addr, string calldata name) external onlyRole(ADDRESS_MANAGER_ROLE) {
+    function setKey(
+        bytes32 key,
+        address addr,
+        string calldata name
+    ) external onlyRole(ADDRESS_MANAGER_ROLE) {
         if (key == bytes32(0)) revert ZeroKey();
         if (bytes(name).length != 0) {
             if (keccak256(bytes(name)) != key) revert NameKeyMismatch();
@@ -71,7 +82,10 @@ contract AddressBook is AccessControl {
     }
 
     /// @notice First-write only: reverts if `key` already holds a non-zero address.
-    function registerName(string calldata name, address addr) external onlyRole(ADDRESS_MANAGER_ROLE) {
+    function registerName(
+        string calldata name,
+        address addr
+    ) external onlyRole(ADDRESS_MANAGER_ROLE) {
         if (bytes(name).length == 0) revert EmptyName();
         if (addr == address(0)) return;
         bytes32 key = keccak256(bytes(name));
@@ -81,7 +95,11 @@ contract AddressBook is AccessControl {
     }
 
     /// @notice First-write only for raw keys.
-    function registerKey(bytes32 key, address addr, string calldata name) external onlyRole(ADDRESS_MANAGER_ROLE) {
+    function registerKey(
+        bytes32 key,
+        address addr,
+        string calldata name
+    ) external onlyRole(ADDRESS_MANAGER_ROLE) {
         if (key == bytes32(0)) revert ZeroKey();
         if (addr == address(0)) return;
         if (bytes(name).length != 0 && keccak256(bytes(name)) != key) revert NameKeyMismatch();
@@ -94,15 +112,21 @@ contract AddressBook is AccessControl {
         _set(key, addr, label_);
     }
 
-    function get(bytes32 key) external view returns (address) {
+    function get(
+        bytes32 key
+    ) external view returns (address) {
         return _addr[key];
     }
 
-    function getByName(string calldata name) external view returns (address) {
+    function getByName(
+        string calldata name
+    ) external view returns (address) {
         return _addr[keccak256(bytes(name))];
     }
 
-    function label(bytes32 key) external view returns (string memory) {
+    function label(
+        bytes32 key
+    ) external view returns (string memory) {
         return _label[key];
     }
 
@@ -110,7 +134,9 @@ contract AddressBook is AccessControl {
         return _keys.length();
     }
 
-    function keyAt(uint256 index) external view returns (bytes32) {
+    function keyAt(
+        uint256 index
+    ) external view returns (bytes32) {
         return _keys.at(index);
     }
 
@@ -118,7 +144,11 @@ contract AddressBook is AccessControl {
         return _keys.values();
     }
 
-    function _set(bytes32 key, address addr, string memory name) private {
+    function _set(
+        bytes32 key,
+        address addr,
+        string memory name
+    ) private {
         address prev = _addr[key];
         if (addr == address(0)) {
             if (prev == address(0)) return;

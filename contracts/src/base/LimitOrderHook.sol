@@ -359,7 +359,7 @@ contract LimitOrderHook is BaseHook, IUnlockCallback {
         address sender
     ) internal {
         // <- was public
-    // get the order
+        // get the order
         OrderIdLibrary.OrderId orderId = getOrderId(key, tickLower, zeroForOne);
         OrderInfo storage orderInfo = _orderInfos[orderId];
 
@@ -441,7 +441,7 @@ contract LimitOrderHook is BaseHook, IUnlockCallback {
         address sender
     ) internal returns (uint256 amount0, uint256 amount1) {
         // <- was public
-    // get the order info
+        // get the order info
         OrderInfo storage orderInfo = _orderInfos[orderId];
 
         // revert if the order is not filled

@@ -4,10 +4,10 @@
 pragma solidity ^0.8.26;
 
 // External imports
-import {Currency} from "@v4-core/types/Currency.sol";
-import {IPoolManager} from "@v4-core/interfaces/IPoolManager.sol";
-import {IERC20} from "@oz/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@oz/token/ERC20/utils/SafeERC20.sol";
+import { Currency } from "@v4-core/types/Currency.sol";
+import { IPoolManager } from "@v4-core/interfaces/IPoolManager.sol";
+import { IERC20 } from "@oz/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@oz/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @dev Library used to interact with the `PoolManager` to settle any open deltas.
@@ -29,7 +29,13 @@ library CurrencySettler {
      * @param amount Amount to send
      * @param burn If true, burn the ERC-6909 token, otherwise transfer ERC-20 to the `PoolManager`
      */
-    function settle(Currency currency, IPoolManager poolManager, address payer, uint256 amount, bool burn) internal {
+    function settle(
+        Currency currency,
+        IPoolManager poolManager,
+        address payer,
+        uint256 amount,
+        bool burn
+    ) internal {
         // Early return when amount is 0 given that some tokens may revert in this case
         if (amount == 0) return;
 
@@ -39,7 +45,7 @@ library CurrencySettler {
             poolManager.burn(payer, currency.toId(), amount);
         } else if (currency.isAddressZero()) {
             poolManager.sync(currency);
-            poolManager.settle{value: amount}();
+            poolManager.settle{ value: amount }();
         } else {
             poolManager.sync(currency);
             if (payer != address(this)) {
@@ -59,9 +65,13 @@ library CurrencySettler {
      * @param amount Amount to receive
      * @param claims If true, mint the ERC-6909 token, otherwise transfer ERC-20 from the `PoolManager` to recipient
      */
-    function take(Currency currency, IPoolManager poolManager, address recipient, uint256 amount, bool claims)
-        internal
-    {
+    function take(
+        Currency currency,
+        IPoolManager poolManager,
+        address recipient,
+        uint256 amount,
+        bool claims
+    ) internal {
         // Early return when amount is 0 given that some tokens may revert in this case
         if (amount == 0) return;
 

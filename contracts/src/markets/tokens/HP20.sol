@@ -10,7 +10,4 @@ import { DERC20 } from "@doppler/tokens/DERC20.sol";
  * @custom:experimental DeFi markets covering EPL, NFL, NBA, and more. | Learn more at https://docs.highpotential.io/
  * @custom:security-contact security@islalabs.co
  */
-contract HP20 is DERC20 { 
-    - Can't be used to initialize any new pools
-    - All other functions are normal
-}
+contract HP20 is DERC20 { }
