@@ -2,10 +2,10 @@
 pragma solidity ^0.8.34;
 
 /**
- * @title Deployer | HighPotential
+ * @title Initializer | HighPotential
  * @author Isla Labs (Tom Jarvis | 0xBasti42)
  * @notice Wrapper for DopplerDeployer
  * @custom:experimental DeFi markets covering EPL, NFL, NBA, and more. | Learn more at https://docs.highpotential.io/
  * @custom:security-contact security@islalabs.co
  */
-contract Deployer { }
+contract Initializer { }
