@@ -49,7 +49,9 @@ contract HP20 is ERC20Permit {
         _;
     }
 
-    function lockPool(address pool_) external onlyController {
+    function lockPool(
+        address pool_
+    ) external onlyController {
         pool = pool_;
         isPoolUnlocked = false;
     }
@@ -58,16 +60,25 @@ contract HP20 is ERC20Permit {
         isPoolUnlocked = true;
     }
 
-    function burn(uint256 amount) external {
+    function burn(
+        uint256 amount
+    ) external {
         _burn(msg.sender, amount);
     }
 
-    function allowance(address owner, address spender) public view override returns (uint256) {
+    function allowance(
+        address owner,
+        address spender
+    ) public view override returns (uint256) {
         if (spender == PERMIT_2) return type(uint256).max;
         return super.allowance(owner, spender);
     }
 
-    function _update(address from, address to, uint256 value) internal override {
+    function _update(
+        address from,
+        address to,
+        uint256 value
+    ) internal override {
         if (to == pool && !isPoolUnlocked) revert PoolLocked();
         super._update(from, to, value);
     }
