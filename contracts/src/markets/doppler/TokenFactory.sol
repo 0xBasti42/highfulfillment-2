@@ -7,9 +7,7 @@ import { DERC20 } from "src/tokens/DERC20.sol";
 
 /// @custom:security-contact security@whetstone.cc
 contract TokenFactory is ITokenFactory, ImmutableAirlock {
-    constructor(
-        address airlock_
-    ) ImmutableAirlock(airlock_) { }
+    constructor(address airlock_) ImmutableAirlock(airlock_) { }
 
     /**
      * @notice Creates a new DERC20 token
@@ -19,13 +17,11 @@ contract TokenFactory is ITokenFactory, ImmutableAirlock {
      * @param salt Salt used for the create2 deployment
      * @param data Creation parameters encoded as bytes
      */
-    function create(
-        uint256 initialSupply,
-        address recipient,
-        address owner,
-        bytes32 salt,
-        bytes calldata data
-    ) external onlyAirlock returns (address) {
+    function create(uint256 initialSupply, address recipient, address owner, bytes32 salt, bytes calldata data)
+        external
+        onlyAirlock
+        returns (address)
+    {
         (
             string memory name,
             string memory symbol,

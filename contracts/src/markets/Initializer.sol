@@ -6,8 +6,47 @@ import { IHooks, IPoolManager, PoolKey } from "@v4-core/PoolManager.sol";
 import { LPFeeLibrary } from "@v4-core/libraries/LPFeeLibrary.sol";
 import { TickMath } from "@v4-core/libraries/TickMath.sol";
 import { Currency, CurrencyLibrary } from "@v4-core/types/Currency.sol";
-import { Doppler } from "@markets/hooks/Doppler.sol";
+import { ILiquidityMigrator } from "@base/interfaces/ILiquidityMigrator.sol";
 import { IPoolInitializer } from "@base/interfaces/IPoolInitializer.sol";
+import { ITokenFactory } from "@base/interfaces/ITokenFactory.sol";
+import { Doppler } from "@markets/hooks/DopplerHook.sol";
+
+enum ModuleState {
+    NotWhitelisted,
+    TokenFactory,
+    GovernanceFactory,
+    PoolInitializer,
+    LiquidityMigrator
+}
+
+struct AssetData {
+    address numeraire;
+    address timelock;
+    address governance;
+    ILiquidityMigrator liquidityMigrator;
+    IPoolInitializer poolInitializer;
+    address pool;
+    address migrationPool;
+    uint256 numTokensToSell;
+    uint256 totalSupply;
+    address integrator;
+}
+
+struct CreateParams {
+    uint256 initialSupply;
+    uint256 numTokensToSell;
+    address numeraire;
+    ITokenFactory tokenFactory;
+    bytes tokenFactoryData;
+    IGovernanceFactory governanceFactory;
+    bytes governanceFactoryData;
+    IPoolInitializer poolInitializer;
+    bytes poolInitializerData;
+    ILiquidityMigrator liquidityMigrator;
+    bytes liquidityMigratorData;
+    address integrator;
+    bytes32 salt;
+}
 
 /**
  * @title Initializer | HighPotential
@@ -16,7 +55,7 @@ import { IPoolInitializer } from "@base/interfaces/IPoolInitializer.sol";
  * @custom:experimental DeFi markets covering EPL, NFL, NBA, and more. | Learn more at https://docs.highpotential.io/
  * @custom:security-contact security@islalabs.co
  */
-contract UniswapV4Initializer is IPoolInitializer {
+contract Initializer is IPoolInitializer {
     using CurrencyLibrary for Currency;
     using SafeTransferLib for address;
 
@@ -45,11 +84,7 @@ contract UniswapV4Initializer is IPoolInitializer {
      * @param poolManager_ Address of the Uniswap V4 PoolManager
      * @param deployer_ Address of the DopplerDeployer contract
      */
-    constructor(
-        address airlock_,
-        IPoolManager poolManager_,
-        DopplerDeployer deployer_
-    ) ImmutableAirlock(airlock_) {
+    constructor(address airlock_, IPoolManager poolManager_, DopplerDeployer deployer_) ImmutableAirlock(airlock_) {
         poolManager = poolManager_;
         deployer = deployer_;
     }
@@ -59,13 +94,11 @@ contract UniswapV4Initializer is IPoolInitializer {
     // --------------------------------------------
 
     /// @inheritdoc IPoolInitializer
-    function initialize(
-        address asset,
-        address numeraire,
-        uint256 numTokensToSell,
-        bytes32 salt,
-        bytes calldata data
-    ) external onlyAirlock returns (address) {
+    function initialize(address asset, address numeraire, uint256 numTokensToSell, bytes32 salt, bytes calldata data)
+        external
+        onlyAirlock
+        returns (address)
+    {
         (,,,, int24 startingTick,,,, bool isToken0,,, int24 tickSpacing) = abi.decode(
             data, (uint256, uint256, uint256, uint256, int24, int24, uint256, int24, bool, uint256, uint24, int24)
         );
@@ -94,9 +127,7 @@ contract UniswapV4Initializer is IPoolInitializer {
     }
 
     /// @inheritdoc IPoolInitializer
-    function exitLiquidity(
-        address hook
-    )
+    function exitLiquidity(address hook)
         external
         onlyAirlock
         returns (

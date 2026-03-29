@@ -48,10 +48,7 @@ abstract contract ERC20Snapshot is ERC20 {
     /**
      * @dev Retrieves the balance of `account` at the time `snapshotId` was created.
      */
-    function balanceOfAt(
-        address account,
-        uint256 snapshotId
-    ) public view virtual returns (uint256) {
+    function balanceOfAt(address account, uint256 snapshotId) public view virtual returns (uint256) {
         (bool snapshotted, uint256 value) = _valueAt(snapshotId, _accountBalanceSnapshots[account]);
         return snapshotted ? value : balanceOf(account);
     }
@@ -59,9 +56,7 @@ abstract contract ERC20Snapshot is ERC20 {
     /**
      * @dev Retrieves the total supply at the time `snapshotId` was created.
      */
-    function totalSupplyAt(
-        uint256 snapshotId
-    ) public view virtual returns (uint256) {
+    function totalSupplyAt(uint256 snapshotId) public view virtual returns (uint256) {
         (bool snapshotted, uint256 value) = _valueAt(snapshotId, _totalSupplySnapshots);
         return snapshotted ? value : totalSupply();
     }
@@ -70,11 +65,7 @@ abstract contract ERC20Snapshot is ERC20 {
      * @dev Update snapshots before balances/supply are modified.
      * Adapts OZ v4 Snapshot logic to v5 `_update` hook.
      */
-    function _update(
-        address from,
-        address to,
-        uint256 value
-    ) internal virtual override {
+    function _update(address from, address to, uint256 value) internal virtual override {
         if (from == address(0)) {
             // mint
             _updateAccountSnapshot(to);
@@ -91,10 +82,7 @@ abstract contract ERC20Snapshot is ERC20 {
         super._update(from, to, value);
     }
 
-    function _valueAt(
-        uint256 snapshotId,
-        Snapshots storage snapshots
-    ) private view returns (bool, uint256) {
+    function _valueAt(uint256 snapshotId, Snapshots storage snapshots) private view returns (bool, uint256) {
         require(snapshotId > 0, "ERC20Snapshot: id is 0");
         require(snapshotId <= _getCurrentSnapshotId(), "ERC20Snapshot: nonexistent id");
 
@@ -107,9 +95,7 @@ abstract contract ERC20Snapshot is ERC20 {
         }
     }
 
-    function _updateAccountSnapshot(
-        address account
-    ) private {
+    function _updateAccountSnapshot(address account) private {
         _updateSnapshot(_accountBalanceSnapshots[account], balanceOf(account));
     }
 
@@ -117,10 +103,7 @@ abstract contract ERC20Snapshot is ERC20 {
         _updateSnapshot(_totalSupplySnapshots, totalSupply());
     }
 
-    function _updateSnapshot(
-        Snapshots storage snapshots,
-        uint256 currentValue
-    ) private {
+    function _updateSnapshot(Snapshots storage snapshots, uint256 currentValue) private {
         uint256 currentId = _getCurrentSnapshotId();
         if (_lastSnapshotId(snapshots.ids) < currentId) {
             snapshots.ids.push(currentId);
@@ -128,9 +111,7 @@ abstract contract ERC20Snapshot is ERC20 {
         }
     }
 
-    function _lastSnapshotId(
-        uint256[] storage ids
-    ) private view returns (uint256) {
+    function _lastSnapshotId(uint256[] storage ids) private view returns (uint256) {
         if (ids.length == 0) {
             return 0;
         } else {
@@ -141,10 +122,7 @@ abstract contract ERC20Snapshot is ERC20 {
     // Returns OZ-compatible upper bound:
     // - If an exact match exists, returns its index.
     // - Otherwise, returns index of first element greater than `element` (or length if none).
-    function _findUpperBound(
-        uint256[] storage array,
-        uint256 element
-    ) private view returns (uint256) {
+    function _findUpperBound(uint256[] storage array, uint256 element) private view returns (uint256) {
         uint256 low = 0;
         uint256 high = array.length;
         while (low < high) {

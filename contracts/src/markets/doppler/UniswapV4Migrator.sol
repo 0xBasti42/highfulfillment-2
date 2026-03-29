@@ -112,11 +112,11 @@ contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableAirlock, Proceed
     }
 
     /// @inheritdoc ILiquidityMigrator
-    function initialize(
-        address asset,
-        address numeraire,
-        bytes calldata liquidityMigratorData
-    ) external onlyAirlock returns (address) {
+    function initialize(address asset, address numeraire, bytes calldata liquidityMigratorData)
+        external
+        onlyAirlock
+        returns (address)
+    {
         (
             uint24 fee,
             int24 tickSpacing,
@@ -155,12 +155,12 @@ contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableAirlock, Proceed
     }
 
     /// @inheritdoc ILiquidityMigrator
-    function migrate(
-        uint160 sqrtPriceX96,
-        address token0,
-        address token1,
-        address recipient
-    ) external payable onlyAirlock returns (uint256 liquidity) {
+    function migrate(uint160 sqrtPriceX96, address token0, address token1, address recipient)
+        external
+        payable
+        onlyAirlock
+        returns (uint256 liquidity)
+    {
         AssetData memory assetData = getAssetData[token0][token1];
         PoolKey memory poolKey = assetData.poolKey;
 
@@ -340,8 +340,5 @@ contract UniswapV4MigratorSplit is ILiquidityMigrator, ImmutableAirlock, Proceed
     }
 
     /// @dev NoOp function to pass to `storeBeneficiaries()`, since we don't need to store the beneficiaries
-    function storeBeneficiary(
-        PoolId,
-        BeneficiaryData memory
-    ) private pure { }
+    function storeBeneficiary(PoolId, BeneficiaryData memory) private pure { }
 }

@@ -16,17 +16,11 @@ contract DopplerDeployer {
     // These variables are purposely not immutable to avoid hitting the contract size limit
     IPoolManager public poolManager;
 
-    constructor(
-        IPoolManager poolManager_
-    ) {
+    constructor(IPoolManager poolManager_) {
         poolManager = poolManager_;
     }
 
-    function deploy(
-        uint256 numTokensToSell,
-        bytes32 salt,
-        bytes calldata data
-    ) external returns (Doppler) {
+    function deploy(uint256 numTokensToSell, bytes32 salt, bytes calldata data) external returns (Doppler) {
         (
             uint256 minimumProceeds,
             uint256 maximumProceeds,
@@ -84,23 +78,17 @@ contract UniswapV4Initializer is IPoolInitializer, ImmutableAirlock {
      * @param poolManager_ Address of the Uniswap V4 PoolManager
      * @param deployer_ Address of the DopplerDeployer contract
      */
-    constructor(
-        address airlock_,
-        IPoolManager poolManager_,
-        DopplerDeployer deployer_
-    ) ImmutableAirlock(airlock_) {
+    constructor(address airlock_, IPoolManager poolManager_, DopplerDeployer deployer_) ImmutableAirlock(airlock_) {
         poolManager = poolManager_;
         deployer = deployer_;
     }
 
     /// @inheritdoc IPoolInitializer
-    function initialize(
-        address asset,
-        address numeraire,
-        uint256 numTokensToSell,
-        bytes32 salt,
-        bytes calldata data
-    ) external onlyAirlock returns (address) {
+    function initialize(address asset, address numeraire, uint256 numTokensToSell, bytes32 salt, bytes calldata data)
+        external
+        onlyAirlock
+        returns (address)
+    {
         (,,,, int24 startingTick,,,, bool isToken0,,, int24 tickSpacing) = abi.decode(
             data, (uint256, uint256, uint256, uint256, int24, int24, uint256, int24, bool, uint256, uint24, int24)
         );
@@ -129,9 +117,7 @@ contract UniswapV4Initializer is IPoolInitializer, ImmutableAirlock {
     }
 
     /// @inheritdoc IPoolInitializer
-    function exitLiquidity(
-        address hook
-    )
+    function exitLiquidity(address hook)
         external
         onlyAirlock
         returns (

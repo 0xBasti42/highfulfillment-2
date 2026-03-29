@@ -341,11 +341,7 @@ contract Doppler is BaseHook {
     }
 
     /// @inheritdoc BaseHook
-    function _beforeInitialize(
-        address,
-        PoolKey calldata key,
-        uint160
-    ) internal override returns (bytes4) {
+    function _beforeInitialize(address, PoolKey calldata key, uint160) internal override returns (bytes4) {
         if (isInitialized) revert AlreadyInitialized();
         isInitialized = true;
         poolKey = key;
@@ -366,25 +362,23 @@ contract Doppler is BaseHook {
     /// @param key The pool key
     /// @param tick The initial tick of the pool
     /// @return The function selector for afterInitialize
-    function _afterInitialize(
-        address sender,
-        PoolKey calldata key,
-        uint160,
-        int24 tick
-    ) internal override returns (bytes4) {
+    function _afterInitialize(address sender, PoolKey calldata key, uint160, int24 tick)
+        internal
+        override
+        returns (bytes4)
+    {
         poolManager.updateDynamicLPFee(key, initialLpFee);
         poolManager.unlock(abi.encode(CallbackData({ key: key, sender: sender, tick: tick, isMigration: false })));
         return BaseHook.afterInitialize.selector;
     }
 
     /// @inheritdoc BaseHook
-    function _beforeDonate(
-        address,
-        PoolKey calldata,
-        uint256,
-        uint256,
-        bytes calldata
-    ) internal pure override returns (bytes4) {
+    function _beforeDonate(address, PoolKey calldata, uint256, uint256, bytes calldata)
+        internal
+        pure
+        override
+        returns (bytes4)
+    {
         revert CannotDonate();
     }
 
@@ -395,12 +389,11 @@ contract Doppler is BaseHook {
     /// @return selector The function selector for beforeSwap
     /// @return delta The delta to apply before the swap
     /// @return feeOverride Optional fee override, this is set to 0 in doppler
-    function _beforeSwap(
-        address,
-        PoolKey calldata key,
-        IPoolManager.SwapParams calldata swapParams,
-        bytes calldata
-    ) internal override returns (bytes4, BeforeSwapDelta, uint24) {
+    function _beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata swapParams, bytes calldata)
+        internal
+        override
+        returns (bytes4, BeforeSwapDelta, uint24)
+    {
         if (earlyExit) revert MaximumProceedsReached();
 
         if (block.timestamp < startingTime) revert CannotSwapBeforeStartTime();
@@ -605,9 +598,7 @@ contract Doppler is BaseHook {
     ///         We adjust the bonding curve according to the amount tokens sold relative to the expected amount
     /// @dev Called during beforeSwap when entering a new epoch
     /// @param key The pool key
-    function _rebalance(
-        PoolKey calldata key
-    ) internal {
+    function _rebalance(PoolKey calldata key) internal {
         // We increment by 1 to 1-index the epoch
         uint256 currentEpoch = _getCurrentEpoch();
         uint256 epochsPassed = currentEpoch - uint256(state.lastEpoch);
@@ -785,9 +776,7 @@ contract Doppler is BaseHook {
     /// @notice If offset == 0, retrieves the end time of the current epoch
     ///         If offset == n, retrieves the end time of the nth epoch from the current
     /// @param offset The offset from the current epoch
-    function _getEpochEndWithOffset(
-        uint256 offset
-    ) internal view returns (uint256) {
+    function _getEpochEndWithOffset(uint256 offset) internal view returns (uint256) {
         uint256 epochEnd = (_getCurrentEpoch() + offset) * epochLength + startingTime;
         if (epochEnd > endingTime) {
             epochEnd = endingTime;
@@ -803,9 +792,7 @@ contract Doppler is BaseHook {
 
     /// @notice Retrieves the elapsed time since the start of the sale, normalized to 1e18
     /// @param timestamp The timestamp to retrieve for
-    function _getNormalizedTimeElapsed(
-        uint256 timestamp
-    ) internal view returns (uint256) {
+    function _getNormalizedTimeElapsed(uint256 timestamp) internal view returns (uint256) {
         return FullMath.mulDiv(timestamp - startingTime, WAD, endingTime - startingTime);
     }
 
@@ -813,9 +800,7 @@ contract Doppler is BaseHook {
     ///         If offset == 1, retrieves the expected amount sold by the end of the current epoch
     ///         If offset == n, retrieves the expected amount sold by the end of the nth epoch from the current
     /// @param offset The epoch offset to retrieve for
-    function _getExpectedAmountSoldWithEpochOffset(
-        int256 offset
-    ) internal view returns (uint256) {
+    function _getExpectedAmountSoldWithEpochOffset(int256 offset) internal view returns (uint256) {
         return FullMath.mulDiv(
             _getNormalizedTimeElapsed(
                 uint256((int256(_getCurrentEpoch()) + offset - 1) * int256(epochLength) + int256(startingTime))
@@ -847,10 +832,7 @@ contract Doppler is BaseHook {
     ///         Rounds down according to the asset token denominated price
     /// @param tick The tick to align
     /// @param tickSpacing The tick spacing of the pool
-    function _alignComputedTickWithTickSpacing(
-        int24 tick,
-        int24 tickSpacing
-    ) internal view returns (int24) {
+    function _alignComputedTickWithTickSpacing(int24 tick, int24 tickSpacing) internal view returns (int24) {
         if (isToken0) {
             // Round down if isToken0
             if (tick < 0) {
@@ -877,11 +859,11 @@ contract Doppler is BaseHook {
     /// @param sqrtPriceLower The sqrt price of the lower tick
     /// @param sqrtPriceUpper The sqrt price of the upper tick
     /// @param amount The amount of asset tokens which the liquidity needs to support the sale of
-    function _computeRequiredProceeds(
-        uint160 sqrtPriceLower,
-        uint160 sqrtPriceUpper,
-        uint256 amount
-    ) internal view returns (uint256 requiredProceeds) {
+    function _computeRequiredProceeds(uint160 sqrtPriceLower, uint160 sqrtPriceUpper, uint256 amount)
+        internal
+        view
+        returns (uint256 requiredProceeds)
+    {
         uint128 liquidity;
         if (isToken0) {
             liquidity = LiquidityAmounts.getLiquidityForAmount0(sqrtPriceLower, sqrtPriceUpper, amount);
@@ -898,10 +880,11 @@ contract Doppler is BaseHook {
     /// @param tickSpacing The tick spacing of the pool
     /// @return lower The computed global lower tick
     /// @return upper The computed global upper tick
-    function _getTicksBasedOnState(
-        int256 accumulator,
-        int24 tickSpacing
-    ) internal view returns (int24 lower, int24 upper) {
+    function _getTicksBasedOnState(int256 accumulator, int24 tickSpacing)
+        internal
+        view
+        returns (int24 lower, int24 upper)
+    {
         int24 accumulatorDelta = (accumulator / I_WAD).toInt24();
         int24 adjustedTick = startingTick + accumulatorDelta;
         lower = _alignComputedTickWithTickSpacing(adjustedTick, tickSpacing);
@@ -1077,10 +1060,7 @@ contract Doppler is BaseHook {
     ///         Converts to Q96
     /// @param num The numerator
     /// @param denom The denominator
-    function _computeTargetPriceX96(
-        uint256 num,
-        uint256 denom
-    ) internal pure returns (uint160) {
+    function _computeTargetPriceX96(uint256 num, uint256 denom) internal pure returns (uint160) {
         uint256 targetPriceX96 = FullMath.mulDiv(num, FixedPoint96.Q96, denom);
 
         if (targetPriceX96 > type(uint160).max) {
@@ -1095,12 +1075,11 @@ contract Doppler is BaseHook {
     /// @param lowerPrice The lower sqrt price of the range
     /// @param upperPrice The upper sqrt price of the range
     /// @param amount The amount of tokens to place as liquidity
-    function _computeLiquidity(
-        bool forToken0,
-        uint160 lowerPrice,
-        uint160 upperPrice,
-        uint256 amount
-    ) internal pure returns (uint128) {
+    function _computeLiquidity(bool forToken0, uint160 lowerPrice, uint160 upperPrice, uint256 amount)
+        internal
+        pure
+        returns (uint128)
+    {
         // We decrement the amount by 1 to avoid rounding errors
         amount = amount != 0 ? amount - 1 : amount;
 
@@ -1115,10 +1094,10 @@ contract Doppler is BaseHook {
     /// @param lastEpochPositions The positions to clear
     /// @param key The pool key
     /// @return deltas The balance deltas from removing liquidity
-    function _clearPositions(
-        Position[] memory lastEpochPositions,
-        PoolKey memory key
-    ) internal returns (BalanceDelta deltas, BalanceDelta feeDeltas) {
+    function _clearPositions(Position[] memory lastEpochPositions, PoolKey memory key)
+        internal
+        returns (BalanceDelta deltas, BalanceDelta feeDeltas)
+    {
         for (uint256 i; i < lastEpochPositions.length; ++i) {
             if (lastEpochPositions[i].liquidity != 0) {
                 (BalanceDelta positionDeltas, BalanceDelta positionFeeDeltas) = poolManager.modifyLiquidity(
@@ -1144,12 +1123,9 @@ contract Doppler is BaseHook {
     /// @param currentPrice The current price of the pool
     /// @param swapPrice The target price to swap to
     /// @param key The pool key
-    function _update(
-        Position[] memory newPositions,
-        uint160 currentPrice,
-        uint160 swapPrice,
-        PoolKey memory key
-    ) internal {
+    function _update(Position[] memory newPositions, uint160 currentPrice, uint160 swapPrice, PoolKey memory key)
+        internal
+    {
         if (swapPrice != currentPrice) {
             // Since there's no liquidity in the pool, swapping a non-zero amount allows us to reset its price.
             poolManager.swap(
@@ -1222,9 +1198,7 @@ contract Doppler is BaseHook {
     /// @notice Callback to add liquidity to the pool in afterInitialize
     /// or remove liquidity during migration
     /// @param data The callback data (key, sender, tick)
-    function unlockCallback(
-        bytes calldata data
-    ) external onlyPoolManager returns (bytes memory) {
+    function unlockCallback(bytes calldata data) external onlyPoolManager returns (bytes memory) {
         CallbackData memory callbackData = abi.decode(data, (CallbackData));
         (PoolKey memory key, address sender, int24 tick, bool isMigration) =
             (callbackData.key, callbackData.sender, callbackData.tick, callbackData.isMigration);
@@ -1390,9 +1364,7 @@ contract Doppler is BaseHook {
      * @return balance1 Total balance of token1 migrated (including fees1)
      *
      */
-    function migrate(
-        address recipient
-    )
+    function migrate(address recipient)
         external
         returns (
             uint160 sqrtPriceX96,

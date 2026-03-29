@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.0;
 
 /**
  * @notice Contracts inheriting from this interface are in charge of creating new
@@ -13,13 +13,9 @@ interface IPoolInitializer {
      * @param data Arbitrary data to pass
      * @param pool Address of the freshly deployed pool or the hook
      */
-    function initialize(
-        address asset,
-        address numeraire,
-        uint256 numTokensToSell,
-        bytes32 salt,
-        bytes calldata data
-    ) external returns (address pool);
+    function initialize(address asset, address numeraire, uint256 numTokensToSell, bytes32 salt, bytes calldata data)
+        external
+        returns (address pool);
 
     /**
      * @notice Removes liquidity from a pool
@@ -32,9 +28,7 @@ interface IPoolInitializer {
      * @return fees1 Amount of fees accrued for token1
      * @return balance1 Amount of token1 in the pool
      */
-    function exitLiquidity(
-        address target
-    )
+    function exitLiquidity(address target)
         external
         returns (
             uint160 sqrtPriceX96,
@@ -60,7 +54,5 @@ interface IHook {
      * @notice Triggers the migration stage of the hook contract
      * @return Price of the pool
      */
-    function migrate(
-        address recipient
-    ) external returns (uint256);
+    function migrate(address recipient) external returns (uint256);
 }

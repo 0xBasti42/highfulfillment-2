@@ -29,13 +29,7 @@ library CurrencySettler {
      * @param amount Amount to send
      * @param burn If true, burn the ERC-6909 token, otherwise transfer ERC-20 to the `PoolManager`
      */
-    function settle(
-        Currency currency,
-        IPoolManager poolManager,
-        address payer,
-        uint256 amount,
-        bool burn
-    ) internal {
+    function settle(Currency currency, IPoolManager poolManager, address payer, uint256 amount, bool burn) internal {
         // Early return when amount is 0 given that some tokens may revert in this case
         if (amount == 0) return;
 
@@ -65,13 +59,9 @@ library CurrencySettler {
      * @param amount Amount to receive
      * @param claims If true, mint the ERC-6909 token, otherwise transfer ERC-20 from the `PoolManager` to recipient
      */
-    function take(
-        Currency currency,
-        IPoolManager poolManager,
-        address recipient,
-        uint256 amount,
-        bool claims
-    ) internal {
+    function take(Currency currency, IPoolManager poolManager, address recipient, uint256 amount, bool claims)
+        internal
+    {
         // Early return when amount is 0 given that some tokens may revert in this case
         if (amount == 0) return;
 

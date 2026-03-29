@@ -35,9 +35,7 @@ contract UniswapV4MigratorSplitHook is BaseHook {
 
     /// @notice Modifier to ensure the caller is the Uniswap V4 Migrator
     /// @param sender Address of the caller
-    modifier onlyMigrator(
-        address sender
-    ) {
+    modifier onlyMigrator(address sender) {
         if (sender != migrator) revert OnlyMigrator();
         _;
     }
@@ -45,19 +43,18 @@ contract UniswapV4MigratorSplitHook is BaseHook {
     /// @notice Constructor for the Uniswap V4 Migrator Hook
     /// @param manager Address of the Uniswap V4 Pool Manager
     /// @param migrator_ Address of the Uniswap V4 Migrator contract
-    constructor(
-        IPoolManager manager,
-        UniswapV4MigratorSplit migrator_
-    ) BaseHook(manager) {
+    constructor(IPoolManager manager, UniswapV4MigratorSplit migrator_) BaseHook(manager) {
         migrator = address(migrator_);
     }
 
     /// @inheritdoc BaseHook
-    function _beforeInitialize(
-        address sender,
-        PoolKey calldata,
-        uint160
-    ) internal view override onlyMigrator(sender) returns (bytes4) {
+    function _beforeInitialize(address sender, PoolKey calldata, uint160)
+        internal
+        view
+        override
+        onlyMigrator(sender)
+        returns (bytes4)
+    {
         return BaseHook.beforeInitialize.selector;
     }
 

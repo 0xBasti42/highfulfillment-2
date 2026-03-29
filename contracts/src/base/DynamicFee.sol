@@ -91,9 +91,7 @@ abstract contract DynamicFee {
     //  Initialization
     // ------------------------------------------
 
-    constructor(
-        address _chainlinkEthUsd
-    ) {
+    constructor(address _chainlinkEthUsd) {
         CHAINLINK_ETH_USD = _chainlinkEthUsd;
         FALLBACK_ETH_PRICE = 3_000_000_000; // 6 decimals
 
@@ -115,9 +113,7 @@ abstract contract DynamicFee {
      * @param volumeEth Volume in ETH (wei)
      * @return feeBps Fee in basis points
      */
-    function calculateDynamicFee(
-        uint256 volumeEth
-    ) public view returns (uint256 feeBps) {
+    function calculateDynamicFee(uint256 volumeEth) public view returns (uint256 feeBps) {
         // Fetch ETH price
         uint256 ethPriceUsd = _ethPriceUsd();
 
@@ -155,9 +151,11 @@ abstract contract DynamicFee {
      * @return vStartUsd Starting volume threshold for fee tier
      * @return feeStart Precomputed fee (bps) at v_start for fee tier
      */
-    function _getTierParameters(
-        uint256 volumeUsd
-    ) internal pure returns (uint256 alpha, uint256 vStartUsd, uint256 feeStart) {
+    function _getTierParameters(uint256 volumeUsd)
+        internal
+        pure
+        returns (uint256 alpha, uint256 vStartUsd, uint256 feeStart)
+    {
         if (volumeUsd <= TIER_2_THRESHOLD_USD) return (ALPHA_TIER_1, TIER_1_THRESHOLD_USD, FEE_START_TIER_1);
         if (volumeUsd <= TIER_3_THRESHOLD_USD) return (ALPHA_TIER_2, TIER_2_THRESHOLD_USD, FEE_START_TIER_2);
         if (volumeUsd <= TIER_4_THRESHOLD_USD) return (ALPHA_TIER_3, TIER_3_THRESHOLD_USD, FEE_START_TIER_3);
@@ -170,9 +168,7 @@ abstract contract DynamicFee {
      * @param x Unscaled exponent input
      * @return value The 1e18-scaled result of e^(-x/1000)
      */
-    function _calculateExponentialDecay(
-        uint256 x
-    ) internal pure returns (uint256 value) {
+    function _calculateExponentialDecay(uint256 x) internal pure returns (uint256 value) {
         if (x == 0) return 1 ether; // e^0 = 1
         if (x >= 10_000) return 0; // e^(-10) ≈ 0 (clamp for extreme values)
 

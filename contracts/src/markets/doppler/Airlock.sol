@@ -126,9 +126,7 @@ contract Airlock is Ownable {
     /**
      * @param owner_ Address receiving the ownership of the Airlock contract
      */
-    constructor(
-        address owner_
-    ) Ownable(owner_) { }
+    constructor(address owner_) Ownable(owner_) { }
 
     /**
      * @notice Deploys a new token with the associated governance, timelock and hook contracts
@@ -139,9 +137,10 @@ contract Airlock is Ownable {
      * @return timelock Address of the deployed timelock contract
      * @return migrationPool Address of the created migration pool
      */
-    function create(
-        CreateParams calldata createData
-    ) external returns (address asset, address pool, address governance, address timelock, address migrationPool) {
+    function create(CreateParams calldata createData)
+        external
+        returns (address asset, address pool, address governance, address timelock, address migrationPool)
+    {
         _validateModuleState(address(createData.tokenFactory), ModuleState.TokenFactory);
         _validateModuleState(address(createData.governanceFactory), ModuleState.GovernanceFactory);
         _validateModuleState(address(createData.poolInitializer), ModuleState.PoolInitializer);
@@ -192,9 +191,7 @@ contract Airlock is Ownable {
      * `poolInitializer` contract
      * @param asset Address of the token to migrate
      */
-    function migrate(
-        address asset
-    ) external {
+    function migrate(address asset) external {
         AssetData memory assetData = getAssetData[asset];
 
         DERC20(asset).unlockPool();
@@ -242,12 +239,7 @@ contract Airlock is Ownable {
      * @param balance Balance of the token including fees
      * @param fees Trading fees
      */
-    function _handleFees(
-        address token,
-        address integrator,
-        uint256 balance,
-        uint256 fees
-    ) internal {
+    function _handleFees(address token, address integrator, uint256 balance, uint256 fees) internal {
         if (fees > 0) {
             uint256 protocolLpFees = fees / 20;
             uint256 protocolProceedsFees = (balance - fees) / 1000;
@@ -269,10 +261,7 @@ contract Airlock is Ownable {
      * @param modules Array of module addresses
      * @param states Array of module states
      */
-    function setModuleState(
-        address[] calldata modules,
-        ModuleState[] calldata states
-    ) external onlyOwner {
+    function setModuleState(address[] calldata modules, ModuleState[] calldata states) external onlyOwner {
         uint256 length = modules.length;
 
         if (length != states.length) {
@@ -291,11 +280,7 @@ contract Airlock is Ownable {
      * @param token Address of the token to collect fees from
      * @param amount Amount of fees to collect
      */
-    function collectProtocolFees(
-        address to,
-        address token,
-        uint256 amount
-    ) external onlyOwner {
+    function collectProtocolFees(address to, address token, uint256 amount) external onlyOwner {
         getProtocolFees[token] -= amount;
 
         if (token == address(0)) {
@@ -313,11 +298,7 @@ contract Airlock is Ownable {
      * @param token Address of the token to collect fees from
      * @param amount Amount of fees to collect
      */
-    function collectIntegratorFees(
-        address to,
-        address token,
-        uint256 amount
-    ) external {
+    function collectIntegratorFees(address to, address token, uint256 amount) external {
         getIntegratorFees[msg.sender][token] -= amount;
 
         if (token == address(0)) {
@@ -334,10 +315,7 @@ contract Airlock is Ownable {
      * @param module Address of the module
      * @param state Expected state of the module
      */
-    function _validateModuleState(
-        address module,
-        ModuleState state
-    ) internal view {
+    function _validateModuleState(address module, ModuleState state) internal view {
         require(getModuleState[address(module)] == state, WrongModuleState(module, state, getModuleState[module]));
     }
 }

@@ -14,17 +14,11 @@ contract DopplerFactory {
     // These variables are purposely not immutable to avoid hitting the contract size limit
     IPoolManager public poolManager;
 
-    constructor(
-        IPoolManager poolManager_
-    ) {
+    constructor(IPoolManager poolManager_) {
         poolManager = poolManager_;
     }
 
-    function deploy(
-        uint256 numTokensToSell,
-        bytes32 salt,
-        bytes calldata data
-    ) external returns (Doppler) {
+    function deploy(uint256 numTokensToSell, bytes32 salt, bytes calldata data) external returns (Doppler) {
         (
             uint256 minimumProceeds,
             uint256 maximumProceeds,
