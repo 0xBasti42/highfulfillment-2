@@ -85,7 +85,9 @@ contract HP20 is ERC20Permit {
     // --------------------------------------------
 
     /// @notice Record the LBP / sale `PoolKey` and block ERC20 transfers into the hook until {unlockPool}.
-    function lockActivePoolKey(PoolKey calldata key) external onlyInitializer {
+    function lockActivePoolKey(
+        PoolKey calldata key
+    ) external onlyInitializer {
         activePoolKey = key;
         isPoolUnlocked = false;
         emit ActivePoolKeySet(key, true);
@@ -97,7 +99,9 @@ contract HP20 is ERC20Permit {
     }
 
     /// @notice Update `activePoolKey` after migration (requires pool unlocked; call after {unlockPool} in migrate flow).
-    function syncActivePoolKey(PoolKey calldata key) external onlyMigrator {
+    function syncActivePoolKey(
+        PoolKey calldata key
+    ) external onlyMigrator {
         if (!isPoolUnlocked) revert PoolMustBeUnlocked();
         activePoolKey = key;
         emit ActivePoolKeySet(key, false);
@@ -107,18 +111,27 @@ contract HP20 is ERC20Permit {
     //  Asset Management
     // --------------------------------------------
 
-    function allowance(address owner, address spender) public view override returns (uint256) {
+    function allowance(
+        address owner,
+        address spender
+    ) public view override returns (uint256) {
         if (spender == IAddressBook(ADDRESS_BOOK).getByName("PERMIT_2")) return type(uint256).max;
         return super.allowance(owner, spender);
     }
 
-    function _update(address from, address to, uint256 value) internal override {
+    function _update(
+        address from,
+        address to,
+        uint256 value
+    ) internal override {
         address hook = address(activePoolKey.hooks);
         if (!isPoolUnlocked && hook != address(0) && to == hook) revert PoolLocked();
         super._update(from, to, value);
     }
 
-    function burn(uint256 amount) external {
+    function burn(
+        uint256 amount
+    ) external {
         _burn(msg.sender, amount);
     }
 }

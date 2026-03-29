@@ -9,7 +9,11 @@ interface IHP20 {
     function activePoolKey() external view returns (PoolKey memory);
     function isPoolUnlocked() external view returns (bool);
 
-    function lockActivePoolKey(PoolKey calldata key) external;
+    function lockActivePoolKey(
+        PoolKey calldata key
+    ) external;
     function unlockPool() external;
-    function syncActivePoolKey(PoolKey calldata key) external;
+    function syncActivePoolKey(
+        PoolKey calldata key
+    ) external;
 }
