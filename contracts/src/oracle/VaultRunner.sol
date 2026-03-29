@@ -1,3 +1,5 @@
-1. Collect PBR data and append to storage object in each PlayerVault.
+// SPDX-License-Identifier: AGPL-3.0
+pragma solidity ^0.8.34;
 
-2. OracleRunner can be called every 30s during live matches, keeping player stats up to date in PlayerVaults
+/// @dev WIP — design notes in ../../wip/VaultRunner.notes.md
+contract VaultRunner { }
