@@ -1,7 +1,8 @@
 forge-std/=lib/forge-std/src/
 
-@openzeppelin/=lib/openzeppelin-contracts/
-@openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/
+@oz/=lib/openzeppelin-contracts/
+@oz-upgradeable/=lib/openzeppelin-contracts-upgradeable/
+@doppler/=lib/doppler/src/
 @chainlink/=lib/chainlink-evm/contracts/src/v0.8/
 @v4-core/=lib/v4-core/src/
 @v4-periphery/=lib/v4-periphery/src/
@@ -10,7 +11,7 @@ forge-std/=lib/forge-std/src/
 @solady/=lib/solady/src/
 @prb-math/=lib/prb-math/src/
 
-@shared/=src/_shared/
+@base/=src/base/
 @funding/=src/funding/
 @markets/=src/markets/
 @options/=src/options/

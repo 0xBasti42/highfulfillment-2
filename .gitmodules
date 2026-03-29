@@ -22,3 +22,6 @@
 [submodule "contracts/lib/prb-math"]
 	path = contracts/lib/prb-math
 	url = https://github.com/PaulRBerg/prb-math
+[submodule "contracts/lib/doppler"]
+	path = contracts/lib/doppler
+	url = https://github.com/whetstoneresearch/doppler
