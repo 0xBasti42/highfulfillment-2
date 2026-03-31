@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type Stat = { label: string; value: string; positive?: boolean };
+	type Stat = { label: string; value: string; positive?: boolean; negative?: boolean };
 
 	interface Props {
 		/** Token contract address (or any string) copied when the user clicks the copy control */
@@ -59,10 +59,9 @@
 		{ label: '24h change', value: '+0.1502 / +10.28%', positive: true },
 		{ label: '24h volume', value: '£ 33,894,612' },
 		{ label: 'Staked', value: '£ 3,954,354' },
-		{ label: 'Points', value: '1169 (1st)' },
-		{ label: 'UR', value: '24.56%' },
-		{ label: 'ePBR', value: '♢ 1.3012' },
-		{ label: 'Funding Rate', value: '+0.03%' }
+		{ label: 'PPM', value: '87.36' },
+		{ label: 'ePBR', value: '♢ 0.4261' },
+		{ label: 'Funding', value: '0.0100 (00:06:56)' }
 	];
 </script>
 
@@ -70,8 +69,8 @@
 	<div class="token-info-left">
 		<img src="/tokens/playerToken.svg" alt="Player Token" class="token-image" />
 		<div class="token-name">
-			<p class="token-name-text">E. Haaland</p>
-			<p class="token-club-position">MCI / Attack</p>
+			<p class="token-name-text">D. Rice</p>
+			<p class="token-club-position">ARS / Midfield</p>
 		</div>
 		<button
 			type="button"
@@ -96,6 +95,7 @@
 				<p
 					class="token-info-right-item-value"
 					class:token-info-right-item-value--positive={item.positive === true}
+					class:token-info-right-item-value--negative={item.negative === true}
 				>
 					{item.value}
 				</p>
@@ -169,7 +169,7 @@
 		flex-direction: column;
 		align-items: flex-start;
 		justify-content: center;
-		gap: 2px;
+		gap: 3px;
 	}
 
 	.token-name p {
@@ -317,6 +317,10 @@
 	}
 
 	.token-info-right-item-value--positive {
-		color: var(--color-success);
+		color: #198176;
+	}
+
+	.token-info-right-item-value--negative {
+		color: #ae323e99;
 	}
 </style>
