@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.34;
 
-enum AvgPosition { Keeper, WdeDef, CtrDef, WdeMid, DefMid, AttMid, WdeFwd, CtrFwd }
-
 // --------------------------------------------
-//  Interfaces
+//  Global Coefficients
 // --------------------------------------------
 
 struct Coefficients {
