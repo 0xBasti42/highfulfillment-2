@@ -10,8 +10,6 @@ error Unauthorized();
 
 /// @custom:security-contact security@whetstone.cc
 contract TokenFactory is ITokenFactory, ImmutableAddressProvider {
-    uint256 constant TOTAL_SUPPLY = 22_000_000 ether;
-    
     constructor(address addressProvider_) ImmutableAddressProvider(addressProvider_) { }
 
     modifier onlyInitializer() {
@@ -26,8 +24,8 @@ contract TokenFactory is ITokenFactory, ImmutableAddressProvider {
      * @param addressProvider_ Address provider
      */
     function create(
-        CreateParams calldata createData,
-        address addressProvider_
+        uint256 totalSupply,
+        CreateParams calldata createData
     ) external onlyInitializer returns (address asset, bytes32 salt) {
         ( string memory name, string memory symbol, string memory tokenURI, bytes32 metadataHash, bytes32 salt) = abi.decode(
             createData, (string, string, string, bytes32, bytes32)
@@ -39,9 +37,9 @@ contract TokenFactory is ITokenFactory, ImmutableAddressProvider {
                 symbol,
                 tokenURI,
                 metadataHash,
-                TOTAL_SUPPLY,
+                totalSupply,
                 msg.sender,
-                address(addressProvider_)
+                address(addressProvider)
             )
         );
 

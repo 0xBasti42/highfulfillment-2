@@ -15,7 +15,6 @@ import { DopplerHook } from "@markets/hooks/DopplerHook.sol";
 contract DopplerFactory is ImmutableAddressProvider {
     IPoolManager public poolManager;
 
-    uint256 constant NUM_TOKENS_TO_SELL = 12_000_000 ether;
     uint256 constant MINIMUM_PROCEEDS = 0;
     uint256 constant MAXIMUM_PROCEEDS = 0;
     uint256 constant STARTING_TIME = 0;
@@ -32,10 +31,10 @@ contract DopplerFactory is ImmutableAddressProvider {
         poolManager = poolManager_;
     }
 
-    function deploy(bytes32 salt) external returns (address dopplerHook) {
+    function deploy(uint256 numTokensToSell, bytes32 salt) external returns (address dopplerHook) {
         DopplerHook dopplerHook = new DopplerHook{ salt: salt }(
             poolManager,
-            NUM_TOKENS_TO_SELL,
+            numTokensToSell,
             MINIMUM_PROCEEDS,
             MAXIMUM_PROCEEDS,
             STARTING_TIME,

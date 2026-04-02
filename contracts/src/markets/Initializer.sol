@@ -31,13 +31,13 @@ contract Initializer is ImmutableAddressProvider, ImmutableAirlock {
     //  Config
     // --------------------------------------------
 
-    uint256 public constant TOTAL_SUPPLY = 11_000_000 ether;
-    uint256 public constant NUM_TOKENS_TO_SELL = 8_000_000 ether;
+    uint256 constant TOTAL_SUPPLY = 22_000_000 ether;
+    uint256 constant NUM_TOKENS_TO_SELL = 12_000_000 ether;
 
-    int24 public constant STARTING_TICK = 0;
-    int24 public constant TICK_SPACING = 60;
+    int24 constant STARTING_TICK = 0;
+    int24 constant TICK_SPACING = 60;
 
-    address public constant NUMERAIRE = address(0);
+    address constant NUMERAIRE = address(0);
 
     // --------------------------------------------
     //  Events / errors
@@ -57,7 +57,7 @@ contract Initializer is ImmutableAddressProvider, ImmutableAirlock {
     }
 
     constructor(address addressProvider_) ImmutableAirlock(addressProvider_) ImmutableAddressProvider(addressProvider_) {
-        setModuleStates(addressProvider_);
+        setModuleStates();
     }
 
     // --------------------------------------------
@@ -104,15 +104,11 @@ contract Initializer is ImmutableAddressProvider, ImmutableAirlock {
     //  Launch Functions
     // --------------------------------------------
 
-    function _deployToken(bytes32 salt, CreateParams memory createData) internal returns (address asset_) {
+    function _deployToken(CreateParams memory createData) internal returns (address asset_, bytes32 salt_) {
         address tokenFactory = _getAddress(_addressKey("TOKEN_FACTORY"));
         _validateModuleState(tokenFactory, ModuleState.TokenFactory);
         
-        address asset_ = ITokenFactory(tokenFactory).create(
-            TOTAL_SUPPLY, address(this), salt, createData, address(addressProvider)
-        );
-
-        return asset_;
+        (asset_, salt_) = ITokenFactory(tokenFactory).create(TOTAL_SUPPLY, createData);
     }
 
     function _deployDoppler(address asset, bytes32 salt) internal returns (address dopplerHook_, PoolKey memory poolKey_) {
@@ -160,14 +156,12 @@ contract Initializer is ImmutableAddressProvider, ImmutableAirlock {
     //  Whitelisting
     // --------------------------------------------
     
-    function setModuleStates(address addressProvider_) internal {
-        IAddressProvider addressProvider = IAddressProvider(addressProvider_);
-
+    function setModuleStates() internal {
         string[] memory names = new string[](3);
         names[0] = "TOKEN_FACTORY";
         names[1] = "DOPPLER_FACTORY";
         names[2] = "MIGRATOR";
-        address[] memory addrs = addressProvider.getManyByName(names);
+        address[] memory addrs = _getAddresses(_addressKeys(names));
 
         address[] memory modules = new address[](4);
         modules[0] = address(this);
