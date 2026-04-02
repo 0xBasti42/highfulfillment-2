@@ -6,7 +6,7 @@ import { Club, Position } from "@core/types/AssetTypes.sol";
 enum PlayerStatus { Inactive, Pending, Active }
 
 struct SeasonMinutes {
-    uint16 season;
+    uint16 seasonStart;
     uint256 seasonMinutes;
 }
 

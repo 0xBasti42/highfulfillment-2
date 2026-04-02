@@ -4,7 +4,7 @@ pragma solidity ^0.8.34;
 import { AccessControl } from "@core/AccessControl.sol";
 import { Oracle } from "@core/Oracle.sol";
 import { RateLimit } from "@core/RateLimit.sol";
-import { Player } from "@core/types/PlayerTypes.sol";
+import { Player, SeasonMinutes } from "@core/types/PlayerTypes.sol";
 
 contract Players is AccessControl, RateLimit, Oracle {
     string public getSquads;
@@ -13,6 +13,9 @@ contract Players is AccessControl, RateLimit, Oracle {
     mapping(address tokenAddress => uint256 playerId) public getPlayerId;
     mapping(address tokenAddress => Player player) public getPlayerDataByToken;
     mapping(uint256 playerId => Player player) public getPlayerDataById;
+
+    /// @dev O(1) season lookups per token; kept in sync from `Player.totalMinutes` on add/remove.
+    mapping(address tokenAddress => mapping(uint16 seasonStart => uint256 seasonMinutes)) private _seasonMinutesByToken;
 
     /// @dev Registration order (and removal via swap-and-pop). Used for enumeration only.
     uint256[] private _playerIds;
@@ -23,6 +26,11 @@ contract Players is AccessControl, RateLimit, Oracle {
 
     function scan() external rateLimited {
         // TODO: Implement
+    }
+
+    /// @notice Minutes played in the season identified by `seasonStart` (e.g. 2025 for 2025–26).
+    function getSeasonMinutes(address tokenAddress, uint16 seasonStart) external view returns (uint256) {
+        return _seasonMinutesByToken[tokenAddress][seasonStart];
     }
 
     /// @notice Number of players returned by `getPlayers` / `getAllPlayers` for the current registry.
@@ -62,6 +70,8 @@ contract Players is AccessControl, RateLimit, Oracle {
         getPlayerId[player.tokenAddress] = player.playerId;
         getPlayerDataById[player.playerId] = player;
 
+        _applySeasonMinutes(player.tokenAddress, player.totalMinutes);
+
         _playerIds.push(player.playerId);
         _playerIdToIndexPlusOne[player.playerId] = _playerIds.length;
 
@@ -70,6 +80,9 @@ contract Players is AccessControl, RateLimit, Oracle {
 
     function remove(Player memory player) external onlyOrchestrator {
         require(_playerIdToIndexPlusOne[player.playerId] != 0, "Players: unknown playerId");
+
+        Player storage stored = getPlayerDataById[player.playerId];
+        _clearSeasonMinutes(stored.tokenAddress, stored.totalMinutes);
 
         delete getPlayerDataByToken[player.tokenAddress];
         delete getPlayerId[player.tokenAddress];
@@ -91,5 +104,17 @@ contract Players is AccessControl, RateLimit, Oracle {
         }
         _playerIds.pop();
         delete _playerIdToIndexPlusOne[playerId];
+    }
+
+    function _applySeasonMinutes(address tokenAddress, SeasonMinutes[] memory totalMinutes) private {
+        for (uint256 i; i < totalMinutes.length; ++i) {
+            _seasonMinutesByToken[tokenAddress][totalMinutes[i].seasonStart] = totalMinutes[i].seasonMinutes;
+        }
+    }
+
+    function _clearSeasonMinutes(address tokenAddress, SeasonMinutes[] storage totalMinutes) private {
+        for (uint256 i; i < totalMinutes.length; ++i) {
+            delete _seasonMinutesByToken[tokenAddress][totalMinutes[i].seasonStart];
+        }
     }
 }
