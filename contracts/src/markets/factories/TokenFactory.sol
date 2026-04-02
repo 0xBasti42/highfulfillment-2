@@ -5,24 +5,16 @@ import { ITokenFactory } from "@markets/factories/interfaces/ITokenFactory.sol";
 import { AddressBook } from "@base/AddressBook.sol";
 import { HP20 } from "@markets/tokens/HP20.sol";
 import { CreateParams } from "@markets/types/Types.sol";
+import { Errors } from "@markets/libraries/Errors.sol";
 
-error Unauthorized();
-
-/// @custom:security-contact security@whetstone.cc
 contract TokenFactory is ITokenFactory, AddressBook {
     constructor(address addressProvider_) AddressBook(addressProvider_) { }
 
     modifier onlyInitializer() {
-        if (msg.sender != getAddress(_addressKey("INITIALIZER"))) revert Unauthorized();
+        if (msg.sender != getAddress(_addressKey("INITIALIZER"))) revert Errors.Unauthorized();
         _;
     }
 
-    /**
-     * @notice Creates a new HP20 token
-     * @param salt Salt used for the create2 deployment
-     * @param data Creation parameters encoded as bytes
-     * @param addressProvider_ Address provider
-     */
     function create(
         uint256 totalSupply,
         CreateParams calldata createData

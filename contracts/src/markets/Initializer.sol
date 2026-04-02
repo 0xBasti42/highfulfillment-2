@@ -16,6 +16,8 @@ import { Currency, CurrencyLibrary } from "@v4-core/types/Currency.sol";
 import { Strings } from "@oz/contracts/utils/Strings.sol";
 import { CreateParams, PoolData } from "@markets/types/Types.sol";
 import { DopplerConfig } from "@markets/libraries/DopplerConfig.sol";
+import { Events } from "@markets/libraries/Events.sol";
+import { Errors } from "@markets/libraries/Errors.sol";
 
 /**
  * @title Initializer | HighPotential
@@ -25,9 +27,6 @@ contract Initializer is AccessControl, AddressBook {
     using CurrencyLibrary for Currency;
     using SoladySafeTransferLib for address;
     using SafeTransferLib for ERC20;
-
-    event Create(address indexed asset, PoolData poolData);
-    event Migrate(address indexed asset, PoolData poolData);
 
     // --------------------------------------------
     //  Initialization
@@ -78,7 +77,7 @@ contract Initializer is AccessControl, AddressBook {
             hookMigrator: address(migratorHook)
         });
 
-        emit Create(asset, poolData);
+        emit Events.Create(asset, poolData);
         return (asset, poolData, excessAsset);
     }
 
@@ -87,7 +86,7 @@ contract Initializer is AccessControl, AddressBook {
     }
 
     // --------------------------------------------
-    //  Launch Functions
+    //  Initialization
     // --------------------------------------------
 
     function _deployToken(CreateParams memory createData) internal returns (address asset_, bytes32 salt_) {
@@ -130,7 +129,7 @@ contract Initializer is AccessControl, AddressBook {
     }
 
     // --------------------------------------------
-    //  Migration Functions
+    //  Migration
     // --------------------------------------------
 
     function _migrateLiquidity(address asset, PoolData memory poolData) internal returns (address asset_, PoolData memory poolData_) {
@@ -166,7 +165,7 @@ contract Initializer is AccessControl, AddressBook {
 
     function _setModuleStates(address[] calldata modules, ModuleState[] calldata states) internal pure {
         uint256 length = modules.length;
-        if (length != states.length) revert ArrayLengthsMismatch();
+        if (length != states.length) revert Errors.ArrayLengthsMismatch();
         for (uint256 i; i < length; ++i) {
             getModuleState[modules[i]] = states[i];
         }
@@ -174,7 +173,7 @@ contract Initializer is AccessControl, AddressBook {
 
     function _validateModuleState(address module, ModuleState state) internal view {
         if (getModuleState[module] != state) {
-            revert WrongModuleState(module, state, getModuleState[module]);
+            revert Errors.WrongModuleState(module, state, getModuleState[module]);
         }
     }
 }
