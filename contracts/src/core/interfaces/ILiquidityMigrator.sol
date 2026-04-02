@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.34;
 
-/**
- * @notice Generic interface to migrate current liquidity to a new pool
- */
 interface ILiquidityMigrator {
     function initialize(address asset, address numeraire, bytes calldata data) external returns (address pool);
     function migrate(
