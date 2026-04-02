@@ -3,7 +3,7 @@ pragma solidity ^0.8.34;
 
 import { Doppler } from "@doppler/initializers/Doppler.sol";
 import { ReentrancyGuardTransient } from "@oz/contracts/utils/ReentrancyGuardTransient.sol";
-import { AddressBook } from "@base/AddressBook.sol";
+import { ImmutableAddressProvider } from "@base/ImmutableAddressProvider.sol";
 import { DynamicFee } from "@base/DynamicFee.sol";
 
 /**
@@ -13,4 +13,4 @@ import { DynamicFee } from "@base/DynamicFee.sol";
  * @custom:experimental DeFi markets covering EPL, NFL, NBA, and more. | Learn more at https://docs.highpotential.io/
  * @custom:security-contact security@islalabs.co
  */
-contract DopplerHook is Doppler, ReentrancyGuardTransient, AddressBook, DynamicFee { }
+contract DopplerHook is Doppler, ReentrancyGuardTransient, ImmutableAddressProvider, DynamicFee { }
