@@ -2,15 +2,15 @@
 pragma solidity ^0.8.24;
 
 import { ITokenFactory } from "@markets/factories/interfaces/ITokenFactory.sol";
-import { ImmutableAddressProvider } from "@base/ImmutableAddressProvider.sol";
+import { AddressBook } from "@base/AddressBook.sol";
 import { HP20 } from "@markets/tokens/HP20.sol";
 import { CreateParams } from "@markets/types/Types.sol";
 
 error Unauthorized();
 
 /// @custom:security-contact security@whetstone.cc
-contract TokenFactory is ITokenFactory, ImmutableAddressProvider {
-    constructor(address addressProvider_) ImmutableAddressProvider(addressProvider_) { }
+contract TokenFactory is ITokenFactory, AddressBook {
+    constructor(address addressProvider_) AddressBook(addressProvider_) { }
 
     modifier onlyInitializer() {
         if (msg.sender != getAddress(_addressKey("INITIALIZER"))) revert Unauthorized();

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.34;
 
-import { ImmutableAddressProvider } from "@base/ImmutableAddressProvider.sol";
-import { ImmutableAirlock } from "@base/ImmutableAirlock.sol";
+import { AccessControl } from "@base/AccessControl.sol";
+import { AddressBook } from "@base/AddressBook.sol";
 import { HP20 } from "@markets/tokens/HP20.sol";
 import { ITokenFactory } from "@markets/factories/interfaces/ITokenFactory.sol";
 import { IDopplerFactory } from "@markets/factories/interfaces/IDopplerFactory.sol";
@@ -15,39 +15,25 @@ import { TickMath } from "@v4-core/libraries/TickMath.sol";
 import { Currency, CurrencyLibrary } from "@v4-core/types/Currency.sol";
 import { Strings } from "@oz/contracts/utils/Strings.sol";
 import { CreateParams, PoolData } from "@markets/types/Types.sol";
+import { DopplerConfig } from "@markets/libraries/DopplerConfig.sol";
 
 /**
  * @title Initializer | HighPotential
  * @dev Player token + bonding pool launch. CREATE2 salt for HP20 is produced by Chainlink Functions (`mineSalt.js`); no calldata salt.
  */
-contract Initializer is ImmutableAddressProvider, ImmutableAirlock {
+contract Initializer is AccessControl, AddressBook {
     using CurrencyLibrary for Currency;
     using SoladySafeTransferLib for address;
     using SafeTransferLib for ERC20;
 
-    mapping(address module => ModuleState state) public getModuleState;
-
-    // --------------------------------------------
-    //  Config
-    // --------------------------------------------
-
-    uint256 constant TOTAL_SUPPLY = 22_000_000 ether;
-    uint256 constant NUM_TOKENS_TO_SELL = 12_000_000 ether;
-
-    int24 constant STARTING_TICK = 0;
-    int24 constant TICK_SPACING = 60;
-
-    address constant NUMERAIRE = address(0);
-
-    // --------------------------------------------
-    //  Events / errors
-    // --------------------------------------------
-
     event Create(address indexed asset, PoolData poolData);
+    event Migrate(address indexed asset, PoolData poolData);
 
     // --------------------------------------------
     //  Initialization
     // --------------------------------------------
+
+    mapping(address module => ModuleState state) public getModuleState;
 
     enum ModuleState {
         NotWhitelisted,
@@ -56,7 +42,7 @@ contract Initializer is ImmutableAddressProvider, ImmutableAirlock {
         Migrator
     }
 
-    constructor(address addressProvider_) ImmutableAirlock(addressProvider_) ImmutableAddressProvider(addressProvider_) {
+    constructor(address addressProvider_) AccessControl(addressProvider_) AddressBook(addressProvider_) {
         setModuleStates();
     }
 
@@ -108,28 +94,28 @@ contract Initializer is ImmutableAddressProvider, ImmutableAirlock {
         address tokenFactory = _getAddress(_addressKey("TOKEN_FACTORY"));
         _validateModuleState(tokenFactory, ModuleState.TokenFactory);
         
-        (asset_, salt_) = ITokenFactory(tokenFactory).create(TOTAL_SUPPLY, createData);
+        (asset_, salt_) = ITokenFactory(tokenFactory).create(DopplerConfig.TOTAL_SUPPLY, createData);
     }
 
     function _deployDoppler(address asset, bytes32 salt) internal returns (address dopplerHook_, PoolKey memory poolKey_) {
         address dopplerFactory = _getAddress(_addressKey("DOPPLER_FACTORY"));
         _validateModuleState(dopplerFactory, ModuleState.DopplerFactory);
 
-        address dopplerHook_ = IDopplerFactory(dopplerFactory).deploy(NUM_TOKENS_TO_SELL, salt);
+        address dopplerHook_ = IDopplerFactory(dopplerFactory).deploy(DopplerConfig.NUM_TOKENS_TO_SELL, salt);
 
         bool isToken0 = asset < NUMERAIRE;
         PoolKey memory poolKey_ = PoolKey({
-            currency0: isToken0 ? Currency.wrap(asset) : Currency.wrap(NUMERAIRE),
-            currency1: isToken0 ? Currency.wrap(NUMERAIRE) : Currency.wrap(asset),
+            currency0: isToken0 ? Currency.wrap(asset) : Currency.wrap(DopplerConfig.NUMERAIRE),
+            currency1: isToken0 ? Currency.wrap(DopplerConfig.NUMERAIRE) : Currency.wrap(asset),
             hooks: IHooks(dopplerHook_),
             fee: LPFeeLibrary.DYNAMIC_FEE_FLAG,
-            tickSpacing: TICK_SPACING
+            tickSpacing: DopplerConfig.TICK_SPACING
         });
 
-        ERC20(asset).safeTransfer(dopplerHook_, NUM_TOKENS_TO_SELL); // is this all we need to do to initialize the pool?
+        ERC20(asset).safeTransfer(dopplerHook_, DopplerConfig.NUM_TOKENS_TO_SELL); // is this all we need to do to initialize the pool?
 
         address poolManager = _getAddress(_addressKey("POOL_MANAGER"));
-        IPoolManager(poolManager).initialize(poolKey_, TickMath.getSqrtPriceAtTick(STARTING_TICK));
+        IPoolManager(poolManager).initialize(poolKey_, TickMath.getSqrtPriceAtTick(DopplerConfig.STARTING_TICK));
 
         return (dopplerHook_, poolKey_);
     }
@@ -138,7 +124,7 @@ contract Initializer is ImmutableAddressProvider, ImmutableAirlock {
         address migrator = _getAddress(_addressKey("MIGRATOR"));
         _validateModuleState(migrator, ModuleState.Migrator);
 
-        address migrationPool = migrator.initialize(asset, NUMERAIRE); // needs to be recreated in migrator
+        address migrationPool = migrator.initialize(asset, DopplerConfig.NUMERAIRE); // needs to be recreated in migrator
 
         return migrationPool;
     }
