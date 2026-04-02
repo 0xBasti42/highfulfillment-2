@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.34;
 
-import { ERC20 } from "@openzeppelin/token/ERC20/ERC20.sol";
+import { ERC20 } from "@oz/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @dev Local, v5-compatible ERC20Snapshot. Based on OZ v4.x semantics, adapted to _update hook.
