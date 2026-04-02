@@ -13,4 +13,6 @@ library Errors {
     error Unauthorized();
     error WrongModuleState(address module, ModuleState expected, ModuleState actual);
     error ArrayLengthsMismatch();
+    error OracleNotConfigured();
+    error EmptySource();
 }
