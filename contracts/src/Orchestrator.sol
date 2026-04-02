@@ -61,7 +61,7 @@ contract Orchestrator is AddressBook {
         _validateModuleState(pmDeployer_, ModuleState.PMDeployer);
         _validateModuleState(vaultDeployer_, ModuleState.VaultDeployer);
 
-        (address asset, PoolData memory poolData, uint256 excessAsset) = IInitializer(initializer_).deployAsset(createData);
+        (address asset, PoolData memory poolData, uint256 excessAsset) = IInitializer(initializer_).deploy(createData);
         
         // ... continue
         //

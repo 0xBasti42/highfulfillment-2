@@ -70,7 +70,7 @@ contract Initializer is AccessControl, AddressBook {
     //  Interface
     // --------------------------------------------
 
-    function launchPools(CreateParams calldata createData) 
+    function deploy(CreateParams calldata createData) 
         external 
         onlyOrchestrator 
         returns (address asset, PoolData memory poolData, uint256 excessAsset) 
@@ -99,7 +99,7 @@ contract Initializer is AccessControl, AddressBook {
         return (asset, poolData, excessAsset);
     }
 
-    function migrateLiquidity(address asset, PoolData memory poolData)
+    function migrate(address asset, PoolData memory poolData)
         external
         onlyOrchestrator
         returns (address, PoolData memory)
@@ -155,7 +155,7 @@ contract Initializer is AccessControl, AddressBook {
     //  Migrations
     // --------------------------------------------
 
-    function _migrateLiquidity(address asset, PoolData memory poolData) internal returns (address asset_, PoolData memory poolData_) {
+    function _migrate(address asset, PoolData memory poolData) internal returns (address asset_, PoolData memory poolData_) {
         // TODO: implement
         return (asset, poolData);
     }
