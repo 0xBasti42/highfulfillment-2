@@ -63,7 +63,6 @@
 		width: 100%;
 		background-color: var(--color-surface-elevated);
 		padding: 0;
-		border-right: 1px solid var(--color-border);
 	}
 
 	.app-footer-wrap {

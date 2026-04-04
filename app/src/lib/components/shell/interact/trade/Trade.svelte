@@ -55,7 +55,7 @@
 
 <style>
 	.trade {
-		height: 606px;
+		height: 616px;
 		width: 100%;
 		display: flex;
 		flex-direction: column;
@@ -213,5 +213,6 @@
 		height: 30px;
 		background-color: #202020;
 		border-radius: 5px;
+		margin-bottom: 10px;
 	}
 </style>
