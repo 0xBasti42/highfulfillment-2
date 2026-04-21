@@ -38,7 +38,7 @@
 
 <style>
 	.chart-settings {
-		height: 60px;
+		height: 50px;
 		width: 100%;
 		background-color: var(--color-surface-muted);
 		display: flex;

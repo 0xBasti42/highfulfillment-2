@@ -10,7 +10,7 @@
 		tokenAddress?: string;
 	}
 
-	let { tokenAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb' }: Props = $props();
+	let { tokenAddress = '0x224d35Cc6634C0532925a3b844Bc9e7595f0bEb' }: Props = $props();
 
 	/** Toast visible for this long; check clears earlier so exit animations don’t overlap */
 	const COPY_TOAST_MS = 2000;
@@ -18,6 +18,7 @@
 
 	let copyCheckVisible = $state(false);
 	let copyToastVisible = $state(false);
+	let isHovered = $state(false);
 	let checkTimer: ReturnType<typeof setTimeout> | undefined;
 	let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -77,6 +78,8 @@
 			class="copy-button"
 			class:copy-button--copied={copyCheckVisible}
 			onclick={handleCopy}
+			onmouseenter={() => (isHovered = true)}
+			onmouseleave={() => (isHovered = false)}
 			aria-label={copyToastVisible ? 'Address copied to clipboard' : 'Copy token contract address'}
 		>
 			{#if copyCheckVisible}
@@ -84,7 +87,23 @@
 			{:else if copyToastVisible}
 				<i class="fa-solid fa-copy copy-button-icon" style="opacity: 0;" aria-hidden="true"></i>
 			{:else}
-				<p class="copy-button-text">Copy</p>
+				<span class="copy-button-text-stack">
+					{#if isHovered}
+						<i 
+							class="fa-solid fa-copy copy-button-text" 
+							in:fade={{ duration: 140 }}
+							out:fade={{ duration: 140 }}
+						aria-hidden="true"></i>
+					{:else}
+						<span
+							class="copy-button-text"
+							in:fade={{ duration: 140 }}
+							out:fade={{ duration: 140 }}
+						>
+							{tokenAddress.slice(0, 4)}
+						</span>
+					{/if}
+				</span>
 			{/if}
 		</button>
 	</div>
@@ -213,7 +232,8 @@
 		cursor: pointer;
 		opacity: 0;
 		transition: opacity var(--transition-base);
-		width: 20px;
+		width: 32px;
+		height: 20px;
 	}
 
 	.copy-button-icon {
@@ -223,6 +243,17 @@
 		pointer-events: none;
 	}
 
+	.copy-button-text-stack {
+		display: inline-grid;
+		place-items: center;
+		width: 100%;
+		height: 100%;
+	}
+
+	.copy-button-text-stack > .copy-button-text {
+		grid-area: 1 / 1;
+	}
+
 	.copy-button-text {
 		font-size: var(--text-xs);
 		font-weight: 400;
@@ -230,6 +261,7 @@
 		color: var(--color-text-muted);
 		transition: color var(--transition-base);
 		pointer-events: none;
+		white-space: nowrap;
 	}
 
 	.token-info-left:hover .copy-button {
