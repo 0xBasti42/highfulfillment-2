@@ -93,10 +93,12 @@
 							class="fa-solid fa-copy copy-button-text" 
 							in:fade={{ duration: 140 }}
 							out:fade={{ duration: 140 }}
-						aria-hidden="true"></i>
+							aria-hidden="true">
+						</i>
 					{:else}
 						<span
 							class="copy-button-text"
+							style="font-size: 9px;"
 							in:fade={{ duration: 140 }}
 							out:fade={{ duration: 140 }}
 						>
@@ -255,7 +257,7 @@
 	}
 
 	.copy-button-text {
-		font-size: var(--text-xs);
+		font-size: 12px;
 		font-weight: 400;
 		letter-spacing: 1px;
 		color: var(--color-text-muted);

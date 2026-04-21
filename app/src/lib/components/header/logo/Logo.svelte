@@ -7,6 +7,7 @@
 
 <style>
 	.logo {
+		position: relative;
 		width: auto;
 		height: 25px;
 		display: flex;
@@ -17,31 +18,42 @@
 		cursor: pointer;
 	}
 
+	.logo::before {
+		content: '';
+		position: absolute;
+		left: -8px;
+		top: 50%;
+		width: 2px;
+		height: 18px;
+		background-color: var(--color-border-strong);
+		border-radius: 1px;
+		opacity: 0;
+		transform: translate(-2px, -50%);
+		transition:
+			opacity var(--transition-base),
+			transform var(--transition-base);
+		pointer-events: none;
+	}
+
+	.logo:hover::before {
+		opacity: 1;
+		transform: translate(0, -50%);
+	}
+
 	.logo img {
 		width: 25px;
 		height: 25px;
 		border-radius: 5px;
 		border: 1px solid var(--color-border);
-		transition: border var(--transition-base);
+		transition: all var(--transition-base);
 	}
 
 	.logo:hover img {
 		border: 1px solid var(--color-border-strong);
+		transform: translateX(3px);
 	}
 
-	.logo:active {
-		animation: logo-bounce-right 0.2s ease-out forwards;
-	}
-
-	@keyframes logo-bounce-right {
-		0% {
-			transform: translateX(0);
-		}
-		50% {
-			transform: translateX(3px);
-		}
-		100% {
-			transform: translateX(0);
-		}
+	.logo:active img {
+		opacity: 0.7;
 	}
 </style>
