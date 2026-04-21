@@ -98,7 +98,7 @@
 					{:else}
 						<span
 							class="copy-button-text"
-							style="font-size: 9px;"
+							style="font-size: 10px; color: var(--color-text-faded);"
 							in:fade={{ duration: 140 }}
 							out:fade={{ duration: 140 }}
 						>
@@ -234,13 +234,13 @@
 		cursor: pointer;
 		opacity: 0;
 		transition: opacity var(--transition-base);
-		width: 32px;
+		width: 28px;
 		height: 20px;
 	}
 
 	.copy-button-icon {
 		font-size: 12px;
-		color: var(--color-text-muted);
+		color: var(--color-text-faded);
 		transition: color var(--transition-base);
 		pointer-events: none;
 	}
@@ -260,7 +260,7 @@
 		font-size: 12px;
 		font-weight: 400;
 		letter-spacing: 1px;
-		color: var(--color-text-muted);
+		color: var(--color-text-faded);
 		transition: color var(--transition-base);
 		pointer-events: none;
 		white-space: nowrap;
@@ -271,7 +271,7 @@
 	}
 
 	.token-info-left:hover .copy-button:hover .copy-button-icon {
-		color: #999999;
+		color: var(--color-text-faded);
 	}
 
 	.token-info-left:hover .copy-button:active .copy-button-icon {
@@ -283,7 +283,7 @@
 	}
 
 	.copy-button--copied .copy-button-icon {
-		color: #999999;
+		color: var(--color-text-faded);
 	}
 
 	.token-info-right {

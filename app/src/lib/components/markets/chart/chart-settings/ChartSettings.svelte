@@ -49,7 +49,7 @@
 	.timeframe-container,
 	.chart-type-container,
 	.indicator-container {
-		height: 60%;
+		height: 50%;
 		display: flex;
 		align-items: center;
 		border-right: 1px solid var(--color-border);
@@ -104,10 +104,13 @@
 	}
 
 	.more-timeframes i {
-		margin-bottom: 2px;
+		display: block;
 		font-size: 12px;
+		line-height: 1;
 		color: #565656;
-		transition: all var(--transition-base);
+		transition:
+			color var(--transition-base),
+			transform var(--transition-base);
 	}
 
 	.more-timeframes:hover i {
@@ -125,7 +128,7 @@
 	}
 
 	.indicator-container p:first-child {
-		font-size: 18px;
+		font-size: 16px;
 		color: var(--color-text-muted);
 	}
 </style>
