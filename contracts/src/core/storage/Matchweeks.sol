@@ -12,7 +12,7 @@ contract Matchweeks is AccessControl, RateLimit, Oracle {
 
     mapping(uint256 matchweekNumber => Matchweek matchweek) public getMatchweek;
 
-    constructor(address addressProvider_) AccessControl(addressProvider_) RateLimit(6 hours) { }
+    constructor(address addressProvider_) AccessControl(addressProvider_) RateLimit(24 hours) { }
 
     function scan() external rateLimited {
         // TODO: Implement

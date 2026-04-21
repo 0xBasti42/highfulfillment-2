@@ -13,7 +13,7 @@ contract Fixtures is AccessControl, RateLimit, Oracle {
     mapping(string fixtureName => Fixture fixture) public getFixture;
     mapping(string fixtureName => uint256 fixtureId) public getFixtureId;
 
-    constructor(address addressProvider_) AccessControl(addressProvider_) RateLimit(6 hours) { }
+    constructor(address addressProvider_) AccessControl(addressProvider_) RateLimit(24 hours) { }
 
     function scan() external rateLimited {
         // TODO: Implement

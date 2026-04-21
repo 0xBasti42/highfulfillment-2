@@ -2,6 +2,7 @@
 pragma solidity ^0.8.34;
 
 struct PPM {
+    address token;
     address vault;
     Coefficients coefficients;
     uint256 prevTotal;
