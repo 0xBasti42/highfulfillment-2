@@ -24,7 +24,7 @@
 		left: -8px;
 		top: 50%;
 		width: 2px;
-		height: 18px;
+		height: 12px;
 		background-color: var(--color-border-strong);
 		border-radius: 1px;
 		opacity: 0;
