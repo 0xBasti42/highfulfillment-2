@@ -113,6 +113,7 @@
 		font-size: 12px;
 		line-height: 1;
 		color: var(--color-text-faded);
+		cursor: default;
 		transition:
 			color var(--transition-base),
 			transform var(--transition-base);
@@ -144,5 +145,6 @@
 	.chart-settings-right-icon {
 		width: 100px;
 		filter: grayscale(100%);
+		opacity: 0;
 	}
 </style>

@@ -112,9 +112,9 @@
 				style:--marquee-distance="{-nameOverflow}px"
 				bind:this={nameEl}
 			>
-				<span class="token-name-text-track">G. Mamardashvili</span>
+				<span class="token-name-text-track">D. Rice</span>
 			</p>
-			<p class="token-club-position">LIV / Keeper</p>
+			<p class="token-club-position">ARS / d-Midfield</p>
 		</div>
 		<div class="divider"></div>
 		<button
@@ -395,14 +395,14 @@
 		align-items: center;
 		justify-content: flex-start;
 		gap: 30px;
-		padding: 0 60px 0 20px;
+		padding: 0 40px 0 20px;
 		overflow-x: auto;
 	}
 
 	.scroll-edge {
 		position: absolute;
 		top: 0;
-		bottom: 0;
+		bottom: -1px;
 		width: 8px;
 		background: var(--color-surface-muted);
 		opacity: 0;
@@ -411,6 +411,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		border-bottom: 1px solid var(--color-border);
 	}
 
 	.scroll-edge i {
