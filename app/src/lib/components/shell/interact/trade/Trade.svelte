@@ -1,5 +1,5 @@
 <script lang="ts">
-	type TradeMode = 'exchange' | 'advanced';
+	type TradeMode = 'exchange' | 'advanced' | 'stake';
 	type TradeSide = 'input' | 'output';
 
 	type Token = {

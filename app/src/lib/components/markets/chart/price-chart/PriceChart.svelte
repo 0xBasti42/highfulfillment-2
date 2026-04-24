@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, setContext, type Snippet } from 'svelte';
 	import {
 		CandlestickSeries,
 		CrosshairMode,
@@ -8,18 +8,27 @@
 		type ISeriesApi
 	} from 'lightweight-charts';
 	import { mockCandleData } from './mockData';
+	import { PRICE_CHART_CTX, type PriceChartContext } from './context';
 
 	interface Props {
 		timeScaleHeight?: number;
 		priceScaleWidth?: number;
+		children?: Snippet;
 	}
 
 	let {
 		timeScaleHeight = $bindable(26),
-		priceScaleWidth = $bindable(56)
+		priceScaleWidth = $bindable(56),
+		children
 	}: Props = $props();
 
 	let container: HTMLDivElement;
+
+	// Reactive context object: indicator children read `ctx.chart` inside an
+	// $effect, so flipping this from null → IChartApi (on mount) and back
+	// (on teardown) drives their pane registration / cleanup.
+	const ctx = $state<PriceChartContext>({ chart: null });
+	setContext(PRICE_CHART_CTX, ctx);
 
 	onMount(() => {
 		const chart: IChartApi = createChart(container, {
@@ -28,7 +37,11 @@
 				background: { color: 'transparent' },
 				textColor: '#999999',
 				fontFamily: 'Inter, system-ui, sans-serif',
-				fontSize: 11
+				fontSize: 11,
+				panes: {
+					separatorColor: '#303030',
+					separatorHoverColor: '#404040'
+				}
 			},
 			grid: {
 				vertLines: { color: 'rgba(48, 48, 48, 0.4)' },
@@ -63,6 +76,10 @@
 		series.setData(mockCandleData);
 		chart.timeScale().fitContent();
 
+		// Publish the chart instance so child indicator components can register
+		// themselves as panes via `chart.addSeries(..., paneIndex)`.
+		ctx.chart = chart;
+
 		// Exposes live axis dimensions so the parent can align chrome (e.g. the
 		// settings button) flush with where the time and price axes meet.
 		// Guard against non-positive reads: lightweight-charts can return 0 before
@@ -80,6 +97,9 @@
 		chart.timeScale().subscribeVisibleTimeRangeChange(syncAxisDims);
 
 		return () => {
+			// Null first so any indicator effects observing `ctx.chart` stop trying
+			// to call into a chart that's about to be torn down.
+			ctx.chart = null;
 			chart.remove();
 		};
 	});
@@ -87,6 +107,7 @@
 
 <div class="price-chart">
 	<div class="price-chart__canvas" bind:this={container}></div>
+	{@render children?.()}
 </div>
 
 <style>

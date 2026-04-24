@@ -21,6 +21,20 @@
 	// rather than accumulating floating-point drift across frames.
 	let dragOrigin = { pointerX: 0, pointerY: 0, panelX: 0, panelY: 0 };
 
+	// Brief overlay covering the chart's mount sequence (autoSize layout pass,
+	// pane setHeight rAF deferral, indicator series registration) so the user
+	// doesn't see the chart settle into place. Fixed duration — no chart-readiness
+	// signal so this can't drift if the mount pipeline grows new async steps.
+	const CHART_LOADING_DURATION_MS = 1200;
+	let isChartLoading = $state(true);
+
+	$effect(() => {
+		const timeoutId = setTimeout(() => {
+			isChartLoading = false;
+		}, CHART_LOADING_DURATION_MS);
+		return () => clearTimeout(timeoutId);
+	});
+
 	function clamp(value: number, min: number, max: number): number {
 		return Math.max(min, Math.min(value, max));
 	}
@@ -124,7 +138,9 @@
 		<ChartTools />
 		<div class="price-chart-container">
 			<div class="price-chart-slot">
-				<PriceChart bind:timeScaleHeight bind:priceScaleWidth />
+				<PriceChart bind:timeScaleHeight bind:priceScaleWidth>
+					<Indicators />
+				</PriceChart>
 				<button
 					type="button"
 					class="settings-button"
@@ -138,8 +154,17 @@
 					<img src="/icons/settings.svg" alt="Chart settings" class="settings-button-icon" />
 				</button>
 			</div>
-			<Indicators />
 		</div>
+	</div>
+
+	<div
+		class="chart-loading"
+		class:chart-loading--visible={isChartLoading}
+		role="status"
+		aria-label="Loading chart"
+		aria-hidden={!isChartLoading}
+	>
+		<div class="chart-loading__spinner"></div>
 	</div>
 
 	<div
@@ -259,8 +284,8 @@
 	.settings-button:hover {
 		color: var(--color-text);
 		background-color: var(--color-surface-muted);
-		border-top: 1px solid var(--color-border-light);
-		border-left: 1px solid var(--color-border-light);
+		border-top: 1px solid transparent;
+		border-left: 1px solid transparent;
 	}
 
 	.settings-button:active {
@@ -270,7 +295,12 @@
 	.settings-button-icon {
 		width: 18px;
 		height: 18px;
-		opacity: 0.8;
+		opacity: 0.5;
+		transition: opacity var(--transition-base);
+	}
+
+	.settings-button[aria-expanded='true'] .settings-button-icon {
+		opacity: 1;
 	}
 
 	.settings-panel {
@@ -342,8 +372,7 @@
 		margin: 0;
 		color: var(--color-text-muted);
 		font-size: var(--text-xs);
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-wide);
+		letter-spacing: var(--tracking-default);
 	}
 
 	.settings-panel__segments {
@@ -388,5 +417,47 @@
 	.toggle-row input[type='checkbox'] {
 		accent-color: var(--color-primary);
 		cursor: pointer;
+	}
+
+	.chart-loading {
+		position: absolute;
+		inset: 0;
+		z-index: 5;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: var(--color-surface-elevated);
+		visibility: hidden;
+		pointer-events: none;
+		opacity: 0;
+		/* Delay the visibility flip until the opacity fade-out finishes —
+		   without this, the element jumps to hidden before the fade plays. */
+		transition:
+			opacity var(--transition-slow),
+			visibility 0s linear var(--transition-slow);
+	}
+
+	.chart-loading--visible {
+		visibility: visible;
+		pointer-events: auto;
+		opacity: 1;
+		/* On fade-in, visibility flips immediately so the element is visible
+		   while opacity transitions from 0 to 1. */
+		transition: opacity var(--transition-slow);
+	}
+
+	.chart-loading__spinner {
+		width: 32px;
+		height: 32px;
+		border: 2px solid var(--color-surface-muted);
+		border-top-color: var(--color-text);
+		border-radius: 50%;
+		animation: chart-loading-spin 0.8s linear infinite;
+	}
+
+	@keyframes chart-loading-spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>

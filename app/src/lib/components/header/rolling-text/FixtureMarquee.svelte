@@ -109,6 +109,7 @@
 		color: var(--color-text-muted);
 		transition: all var(--transition-base);
 		cursor: pointer;
+		letter-spacing: var(--tracking-default);
 	}
 
 	.fixture:active {
