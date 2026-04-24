@@ -6,8 +6,8 @@
 	const navItems = [
 		{ href: '/markets', label: 'Markets' },
 		{ href: '/vaults', label: 'Vaults' },
-		{ href: '/options', label: 'Options' },
-		{ href: '/api', label: 'API' }
+		{ href: '/binaries', label: 'Binaries' },
+		{ href: '/fixtures', label: 'Fixtures' }
 	] as const;
 
 	function isActive(href: string): boolean {

@@ -24,7 +24,7 @@
             </div>
         </div>
         <div class="header-right-item">
-            <button class="button">Sign in</button>
+            <button class="button">Connect</button>
         </div>
     </div>
 </div>
@@ -91,9 +91,7 @@
 
     .button {
         height: 25px;
-        width: auto;
-        min-width: 0;
-        padding: 0 50px;
+        width: 142px;
         font-size: 11px;
         transition: all var(--transition-base);
     }

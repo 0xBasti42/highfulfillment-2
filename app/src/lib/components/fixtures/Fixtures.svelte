@@ -1,21 +1,21 @@
 <script lang="ts">
 	interface Props {
-		data: { section: 'vaults' };
+		data: { section: 'fixtures' };
 	}
 
 	let { data }: Props = $props();
 </script>
 
 <svelte:head>
-	<title>EPL | Vaults</title>
+	<title>EPL | Fixtures</title>
 </svelte:head>
 
-<div class="vaults" data-section={data.section}>
-	<!-- Vaults content -->
+<div class="fixtures" data-section={data.section}>
+	<!-- Fixtures content -->
 </div>
 
 <style>
-	.vaults {
+	.fixtures {
 		flex: 1;
 		min-height: 200px;
 	}

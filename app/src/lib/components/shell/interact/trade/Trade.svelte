@@ -198,7 +198,7 @@
 		</div>
 
 		<div class="trade-footer">
-			<button type="button" class="swap-button">Sign in to trade</button>
+			<button type="button" class="swap-button">Connect</button>
 			<div class="swap-info">
 				<p class="swap-info-label"></p>
 			</div>
@@ -315,7 +315,7 @@
 	}
 
 	.settings-icon-container:active {
-		opacity: 0.8;
+		background-color: var(--color-surface-elevated);
 	}
 
 	.settings-icon {

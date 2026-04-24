@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>Markets · HighPotential</title>
+	<title>EPL | dRICE-GBP</title>
 </svelte:head>
 
 <div class="markets" data-section={data.section}>

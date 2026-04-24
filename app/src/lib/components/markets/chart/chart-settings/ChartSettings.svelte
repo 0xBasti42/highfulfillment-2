@@ -117,6 +117,7 @@
 		transition:
 			color var(--transition-base),
 			transform var(--transition-base);
+		padding: 3px;
 	}
 
 	.more-timeframes:hover i {
