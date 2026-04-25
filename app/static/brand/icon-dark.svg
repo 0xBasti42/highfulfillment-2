@@ -1,19 +1,19 @@
 <svg width="1000" height="1000" viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_767_97)">
-<rect width="1000" height="1000" rx="200" fill="url(#paint0_linear_767_97)"/>
-<path d="M526.32 347.2L452.88 664H370.32L443.76 347.2H526.32ZM324.72 347.2L251.28 664H168.72L242.16 347.2H324.72ZM459.12 472.48L444.24 536.32H238.8L253.68 472.48H459.12Z" fill="url(#paint1_linear_767_97)"/>
+<g clip-path="url(#clip0_767_92)">
+<rect width="1000" height="1000" fill="url(#paint0_linear_767_92)"/>
+<path d="M526.32 347.2L452.88 664H370.32L443.76 347.2H526.32ZM324.72 347.2L251.28 664H168.72L242.16 347.2H324.72ZM459.12 472.48L444.24 536.32H238.8L253.68 472.48H459.12Z" fill="url(#paint1_linear_767_92)"/>
 <path d="M525.72 664L599.16 347.2H718.2C755.96 347.2 785.4 355.68 806.52 372.64C827.96 389.28 838.68 412.48 838.68 442.24C838.68 465.28 833.24 485.76 822.36 503.68C811.48 521.28 795.8 535.2 775.32 545.44C754.84 555.36 730.52 560.32 702.36 560.32H593.88L607.8 498.4H699.96C712.44 498.4 722.84 496.16 731.16 491.68C739.8 486.88 746.2 480.8 750.36 473.44C754.84 465.76 757.08 457.44 757.08 448.48C757.08 436.32 753.24 426.72 745.56 419.68C737.88 412.64 725.72 409.12 709.08 409.12H667.32L608.28 664H525.72Z" fill="#D6D6D6" fill-opacity="0.8"/>
 </g>
 <defs>
-<linearGradient id="paint0_linear_767_97" x1="500" y1="0" x2="500" y2="1000" gradientUnits="userSpaceOnUse">
+<linearGradient id="paint0_linear_767_92" x1="500" y1="0" x2="500" y2="1000" gradientUnits="userSpaceOnUse">
 <stop stop-color="#101010"/>
 <stop offset="1" stop-color="#151515"/>
 </linearGradient>
-<linearGradient id="paint1_linear_767_97" x1="56.5" y1="499" x2="516" y2="499" gradientUnits="userSpaceOnUse">
+<linearGradient id="paint1_linear_767_92" x1="56.5" y1="499" x2="516" y2="499" gradientUnits="userSpaceOnUse">
 <stop stop-color="#198176"/>
 <stop offset="1" stop-color="#26C1B1"/>
 </linearGradient>
-<clipPath id="clip0_767_97">
+<clipPath id="clip0_767_92">
 <rect width="1000" height="1000" rx="5" fill="white"/>
 </clipPath>
 </defs>

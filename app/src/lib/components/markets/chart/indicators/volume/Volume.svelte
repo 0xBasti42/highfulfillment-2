@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
-	import { HistogramSeries, type ISeriesApi } from 'lightweight-charts';
+	import { HistogramSeries, type IPaneApi, type ISeriesApi, type Time } from 'lightweight-charts';
 	import { mockVolumeData } from './mockData';
 	import { PRICE_CHART_CTX, type PriceChartContext } from '../../price-chart/context';
 
@@ -12,6 +12,11 @@
 
 	const ctx = getContext<PriceChartContext>(PRICE_CHART_CTX);
 
+	let pane = $state<IPaneApi<Time> | null>(null);
+
+	// Effect 1 — register the pane and series. Only depends on `ctx.chart`,
+	// so prop changes don't tear down the pane (see PointsEst.svelte for the
+	// full reasoning behind splitting registration from height application).
 	$effect(() => {
 		const chart = ctx.chart;
 		if (!chart) return;
@@ -32,15 +37,10 @@
 
 		series.setData(mockVolumeData);
 
-		// Defer setHeight to the next frame — see PointsEst.svelte for the reasoning;
-		// short version: setHeight is stretch-factor-based and produces a collapsed
-		// pane if called before the chart has had its initial autoSize layout pass.
-		const rafId = requestAnimationFrame(() => {
-			chart.panes()[paneIndex]?.setHeight(defaultHeight);
-		});
+		pane = chart.panes()[paneIndex] ?? null;
 
 		return () => {
-			cancelAnimationFrame(rafId);
+			pane = null;
 			// Chart may already be torn down by the time this cleanup runs (e.g.
 			// PriceChart unmounting first). Swallow the error in that case.
 			try {
@@ -49,5 +49,19 @@
 				/* chart already destroyed */
 			}
 		};
+	});
+
+	// Effect 2 — apply the pane height. Synchronous reads of both `pane` and
+	// `defaultHeight` so Svelte tracks them as dependencies; reads inside the
+	// rAF callback alone would NOT establish dependencies.
+	$effect(() => {
+		const p = pane;
+		const height = defaultHeight;
+		if (!p) return;
+
+		const rafId = requestAnimationFrame(() => {
+			p.setHeight(height);
+		});
+		return () => cancelAnimationFrame(rafId);
 	});
 </script>

@@ -549,7 +549,7 @@
 		justify-content: center;
 		border-radius: 5px;
 		background: linear-gradient(
-			to right,
+			to left,
 			var(--color-primary-light) -20%,
 			var(--color-primary) 100%
 		);
@@ -559,6 +559,10 @@
 		letter-spacing: 1px;
 		cursor: pointer;
 		transition: all var(--transition-base);
+	}
+
+	.swap-button:hover {
+		background: linear-gradient(to right, var(--color-primary-light) -20%, var(--color-primary) 100%);
 	}
 
 	.swap-button:active {

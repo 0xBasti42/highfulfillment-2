@@ -260,11 +260,15 @@ button {
 	font-weight: 300;
 	letter-spacing: var(--tracking-default);
 	color: var(--color-text-inverse);
-	background: linear-gradient(to right, var(--color-primary-light) -20%, var(--color-primary) 100%);
+	background: linear-gradient(to left, var(--color-primary-light) -20%, var(--color-primary) 100%);
 	border: none;
 	border-radius: var(--radius-pill);
 	transition: all var(--transition-base);
 	cursor: pointer;
+}
+
+button:hover {
+	background: linear-gradient(to right, var(--color-primary-light) -20%, var(--color-primary) 100%);
 }
 
 button:active {

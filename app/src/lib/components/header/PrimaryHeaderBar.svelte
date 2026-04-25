@@ -10,17 +10,9 @@
     </div>
     <div class="header-right">
         <div class="header-right-item">
-            <div class="exchange-rate">
-                <p class="exchange-rate-label">USD/GBP</p>
-                <p class="exchange-rate-value">£0.75</p>
-            </div>
-            <div class="exchange-rate">
-                <p class="exchange-rate-label">sETH/GBP</p>
-                <p class="exchange-rate-value">£15.49</p>
-            </div>
-            <div class="exchange-rate">
-                <p class="exchange-rate-label">ETH/GBP</p>
-                <p class="exchange-rate-value">£1549.39</p>
+            <div class="active-chain">
+                <div class="active-chain-icon"></div>
+                <p class="active-chain-name">Base</p>
             </div>
         </div>
         <div class="header-right-item">
@@ -54,7 +46,7 @@
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        gap: 25px;
+        gap: 10px;
     }
 
     .header-right-item {
@@ -66,33 +58,40 @@
         cursor: default;
     }
 
-    .exchange-rate {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-    }
-
-    .exchange-rate-label {
-        font-size: 10px;
-        font-weight: 400;
-        letter-spacing: 1px;
-        color: var(--color-text-muted);
-        margin-top: 2px;
-    }
-
-    .exchange-rate-value {
-        font-size: 10px;
-        font-weight: 400;
-        letter-spacing: 1px;
-        color: var(--color-text);
-        font-size: var(--text-sm);
-    }
-
     .button {
         height: 25px;
         width: 142px;
         font-size: 11px;
         transition: all var(--transition-base);
+    }
+
+    .button:active {
+        opacity: 0.8;
+    }
+
+    .active-chain {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 5px;
+        background-color: var(--color-surface-muted);
+        border-radius: var(--radius-pill);
+        padding: 5px;
+        padding-right: 10px; /* 15px || 10px */
+    }
+
+    .active-chain-icon {
+        width: 15px;
+        height: 15px;
+        border-radius: 5%;
+        background-color: #0000ff; /* #000000 || #0000ff */
+    }
+
+    .active-chain-name {
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 1px;
+        color: var(--color-text);
     }
 </style>

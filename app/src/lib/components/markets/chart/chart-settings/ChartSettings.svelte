@@ -40,10 +40,11 @@
 	.chart-settings {
 		height: 50px;
 		width: 100%;
-		background-color: var(--color-surface-muted);
+		background-color: var(--color-surface-elevated);
 		display: flex;
 		align-items: center;
 		justify-content: flex-start;
+		border-bottom: 1px solid var(--color-border-light);
 	}
 
 	.timeframe-container,
@@ -131,6 +132,6 @@
 	.chart-settings-right-icon {
 		width: 100px;
 		filter: grayscale(100%);
-		opacity: 0;
+		opacity: 1;
 	}
 </style>

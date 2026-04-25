@@ -9,5 +9,5 @@
 	chart panes inside the PriceChart canvas. Source order here = pane order
 	(top-to-bottom under the candles).
 -->
-<PointsEst defaultHeight={150} />
+<PointsEst defaultHeight={50} />
 <Volume defaultHeight={30} />

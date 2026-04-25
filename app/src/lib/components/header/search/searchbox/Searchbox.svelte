@@ -9,7 +9,7 @@
 <style>
 	.searchbox {
         background-color: var(--color-surface-muted);
-		border: 1px solid var(--color-border);
+		border: 1px solid var(--color-border-light);
 		border-left: none;
 		border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
 		height: 30px;

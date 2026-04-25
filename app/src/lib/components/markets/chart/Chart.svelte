@@ -1,9 +1,17 @@
 <script lang="ts">
+	import { setContext } from 'svelte';
 	import TokenInfo from './token-info/TokenInfo.svelte';
 	import ChartSettings from './chart-settings/ChartSettings.svelte';
 	import ChartTools from './chart-tools/ChartTools.svelte';
 	import PriceChart from './price-chart/PriceChart.svelte';
 	import Indicators from './indicators/Indicators.svelte';
+	import { PRICE_CHART_CTX, type PriceChartContext } from './price-chart/context';
+
+	// Created here (rather than inside PriceChart) so the sibling ChartTools
+	// palette can read the same context. PriceChart is the writer for both
+	// `chart` and `drawing`; ChartTools and indicator children are readers.
+	const ctx = $state<PriceChartContext>({ chart: null, drawing: null });
+	setContext(PRICE_CHART_CTX, ctx);
 
 	let timeScaleHeight = $state(26);
 	let priceScaleWidth = $state(56);
@@ -210,7 +218,7 @@
 			</label>
 			<label class="toggle-row">
 				<span>Watermark</span>
-				<input type="checkbox" checked />
+				<input type="checkbox" checked={false} />
 			</label>
 		</section>
 

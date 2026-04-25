@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, setContext, type Snippet } from 'svelte';
+	import { onMount, getContext, type Snippet } from 'svelte';
 	import {
 		CandlestickSeries,
 		CrosshairMode,
@@ -9,6 +9,7 @@
 	} from 'lightweight-charts';
 	import { mockCandleData } from './mockData';
 	import { PRICE_CHART_CTX, type PriceChartContext } from './context';
+	import { ChartDrawingAdapter } from '../drawing/drawing.adapter.svelte';
 
 	interface Props {
 		timeScaleHeight?: number;
@@ -24,11 +25,11 @@
 
 	let container: HTMLDivElement;
 
-	// Reactive context object: indicator children read `ctx.chart` inside an
-	// $effect, so flipping this from null → IChartApi (on mount) and back
-	// (on teardown) drives their pane registration / cleanup.
-	const ctx = $state<PriceChartContext>({ chart: null });
-	setContext(PRICE_CHART_CTX, ctx);
+	// Context is created in the parent `Chart.svelte` so the sibling ChartTools
+	// palette can read it too. We read it here and write into it on mount —
+	// flipping `ctx.chart` from null → IChartApi (and `ctx.drawing` from null →
+	// adapter) drives indicator pane registration and tool-palette enablement.
+	const ctx = getContext<PriceChartContext>(PRICE_CHART_CTX);
 
 	onMount(() => {
 		const chart: IChartApi = createChart(container, {
@@ -39,13 +40,13 @@
 				fontFamily: 'Inter, system-ui, sans-serif',
 				fontSize: 11,
 				panes: {
-					separatorColor: '#303030',
-					separatorHoverColor: '#404040'
+					separatorColor: '#30303050',
+					separatorHoverColor: '#303030'
 				}
 			},
 			grid: {
-				vertLines: { color: 'rgba(48, 48, 48, 0.4)' },
-				horzLines: { color: 'rgba(48, 48, 48, 0.4)' }
+				vertLines: { color: '#10101095' },
+				horzLines: { color: '#10101095' }
 			},
 			crosshair: {
 				mode: CrosshairMode.Normal,
@@ -53,11 +54,11 @@
 				horzLine: { color: '#404040', width: 1, style: 3, labelBackgroundColor: '#404040' }
 			},
 			rightPriceScale: {
-				borderColor: '#303030',
+				borderColor: '#30303050',
 				scaleMargins: { top: 0.1, bottom: 0.08 }
 			},
 			timeScale: {
-				borderColor: '#303030',
+				borderColor: '#30303050',
 				timeVisible: true,
 				secondsVisible: false
 			}
@@ -76,9 +77,17 @@
 		series.setData(mockCandleData);
 		chart.timeScale().fitContent();
 
-		// Publish the chart instance so child indicator components can register
-		// themselves as panes via `chart.addSeries(..., paneIndex)`.
+		// Drawing tools attach to the candlestick series (so they share its
+		// price scale / coordinate system) and to the container element so the
+		// library's interaction handler can listen for pointer events on the
+		// chart surface during interactive anchor placement.
+		const drawing = new ChartDrawingAdapter();
+		drawing.attach(chart, series, container);
+
+		// Publish chart + drawing adapter so child indicators and the sibling
+		// ChartTools palette can pick them up.
 		ctx.chart = chart;
+		ctx.drawing = drawing;
 
 		// Exposes live axis dimensions so the parent can align chrome (e.g. the
 		// settings button) flush with where the time and price axes meet.
@@ -98,8 +107,11 @@
 
 		return () => {
 			// Null first so any indicator effects observing `ctx.chart` stop trying
-			// to call into a chart that's about to be torn down.
+			// to call into a chart that's about to be torn down. Same applies to
+			// the ChartTools palette observing `ctx.drawing`.
 			ctx.chart = null;
+			ctx.drawing = null;
+			drawing.detach();
 			chart.remove();
 		};
 	});
@@ -132,7 +144,7 @@
 		background-position: calc(50% - 60px) calc(50% - 50px);
 		background-size: 20% auto;
 		filter: grayscale(0.1);
-		opacity: 0.08;
+		opacity: 0;
 		pointer-events: none;
 		z-index: 0;
 	}

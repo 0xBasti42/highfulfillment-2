@@ -2,7 +2,7 @@
 </script>
 
 <div class="logo">
-	<img src="/brand/icon.png" alt="Logo" />
+	<img src="/brand/icon-dark.svg" alt="Logo" />
 </div>
 
 <style>

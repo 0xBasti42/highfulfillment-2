@@ -7,7 +7,7 @@
 		speed?: number;
 	}
 
-	let { count = 10, speed = 90 }: Props = $props();
+	let { count = 10, speed = 110 }: Props = $props();
 
 	const CLUBS = [
 		'Man City',
@@ -106,10 +106,14 @@
 	.fixture {
 		flex-shrink: 0;
 		margin-right: 20px;
-		color: var(--color-text-muted);
+		color: var(--color-text-faded);
 		transition: all var(--transition-base);
 		cursor: pointer;
 		letter-spacing: var(--tracking-default);
+	}
+
+	.fixture:hover {
+		color: #737373;
 	}
 
 	.fixture:active {
@@ -117,7 +121,7 @@
 	}
 
 	.marquee-track:has(.fixture:hover) .fixture:not(:hover) {
-		color: var(--color-text-faded);
+		color: var(--color-border-strong);
 	}
 
 	.vs {
@@ -154,12 +158,6 @@
 		}
 		to {
 			transform: translateX(-50%);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.marquee-track {
-			animation: none;
 		}
 	}
 </style>
