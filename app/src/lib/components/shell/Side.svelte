@@ -14,8 +14,9 @@
 		flex-direction: column;
 		align-items: stretch;
 		justify-content: flex-start;
-		flex: 0.33;
-		height: 896px;
+		flex: 0 0 var(--side-width);
+		height: 100%;
 		background-color: var(--color-surface-elevated);
+		border-left: 1px solid var(--color-border);
 	}
 </style>

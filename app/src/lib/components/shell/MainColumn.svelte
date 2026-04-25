@@ -13,6 +13,5 @@
 		flex: 1;
 		height: 1224px;
 		width: 64%;
-		border-right: 1px solid var(--color-border);
 	}
 </style>

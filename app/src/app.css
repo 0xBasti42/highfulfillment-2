@@ -66,6 +66,13 @@
 	--transition-fast: 150ms ease-out;
 	--transition-base: 200ms ease-out;
 	--transition-slow: 400ms ease-out;
+
+	/* Layout
+	   --side-width is the width of the right-hand aside (Side) and any header
+	   element that needs to align with it (e.g. the prices block in Search).
+	   Anything that should sit in the same vertical column as Side should
+	   use this variable rather than reinventing a flex ratio. */
+	--side-width: 25%;
 }
 
 /* --------------------------------------------------------------------------
