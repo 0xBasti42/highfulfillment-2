@@ -29,12 +29,6 @@
 		symbol: 'dRICE'
 	};
 
-	const TGBP: Token = {
-		image: '/tokens/tgbp-blue.svg',
-		alt: 'tGBP',
-		symbol: 'tGBP'
-	};
-
 	const SETH: Token = {
 		image: '/tokens/seth-dec-3.svg',
 		alt: 'sETH',
@@ -47,10 +41,10 @@
 		symbol: 'ETH'
 	};
 
-	const USDC: Token = {
-		image: '/tokens/usdc.svg',
-		alt: 'USDC',
-		symbol: 'USDC'
+	const TGBP: Token = {
+		image: '/tokens/tgbp-blue.svg',
+		alt: 'tGBP',
+		symbol: 'tGBP'
 	};
 
 	const DAI: Token = {
@@ -65,9 +59,15 @@
 		symbol: 'EURC'
 	};
 
+	const USDC: Token = {
+		image: '/tokens/usdc.svg',
+		alt: 'USDC',
+		symbol: 'USDC'
+	};
+
 	let mode = $state<TradeMode>('exchange');
 	let swapIconTurns = $state(0);
-	let tokenIn = $state<Token>(SETH);
+	let tokenIn = $state<Token>(ETH);
 	let tokenOut = $state<Token>(DRICE);
 	let sellAmount = $state('');
 	let buyAmount = $state('');

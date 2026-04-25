@@ -210,11 +210,11 @@
 			<p class="settings-panel__label">Display</p>
 			<label class="toggle-row">
 				<span>Grid</span>
-				<input type="checkbox" checked />
+				<input type="checkbox" checked={true} />
 			</label>
 			<label class="toggle-row">
 				<span>Crosshair</span>
-				<input type="checkbox" checked />
+				<input type="checkbox" checked={true} />
 			</label>
 			<label class="toggle-row">
 				<span>Watermark</span>
@@ -226,7 +226,7 @@
 			<p class="settings-panel__label">Scale</p>
 			<label class="toggle-row">
 				<span>Log scale</span>
-				<input type="checkbox" />
+				<input type="checkbox" checked={true}/>
 			</label>
 		</section>
 	</div>

@@ -26,9 +26,17 @@
 		</div>
 	</div>
 
+	<div class="division">
+		<p>mock</p>
+	</div>
+
 	<div class="indicator-container">
 		<p>ƒ×</p>
 		<p>Indicators</p>
+	</div>
+
+	<div class="division">
+		<p>mock</p>
 	</div>
 
 	<div class="chart-settings-right">
@@ -52,7 +60,6 @@
 		height: 50%;
 		display: flex;
 		align-items: center;
-		border-right: 1px solid var(--color-border);
 	}
 
 	.timeframe-container {
@@ -115,9 +122,35 @@
 		transform: rotate(180deg);
 	}
 
+	.indicator-container {
+		cursor: pointer;
+		transition: all var(--transition-base);
+		height: 60%;
+		border-right: 0;
+	}
+
+	.indicator-container:hover {
+		color: var(--color-text);
+		background-color: var(--color-surface-muted);
+	}
+
+	.indicator-container:active {
+		opacity: 0.8;
+	}
+
 	.indicator-container p:first-child {
 		font-size: 16px;
 		color: var(--color-text-muted);
+	}
+
+	.division {
+		height: 60%;
+		width: 1px;
+		background-color: var(--color-border);
+	}
+
+	.division p {
+		opacity: 0;
 	}
 
 	.chart-settings-right {
