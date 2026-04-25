@@ -36,7 +36,7 @@
 	};
 
 	const SETH: Token = {
-		image: '/tokens/seth.svg',
+		image: '/tokens/seth-dec-3.svg',
 		alt: 'sETH',
 		symbol: 'sETH'
 	};
@@ -67,7 +67,7 @@
 
 	let mode = $state<TradeMode>('exchange');
 	let swapIconTurns = $state(0);
-	let tokenIn = $state<Token>(DAI);
+	let tokenIn = $state<Token>(SETH);
 	let tokenOut = $state<Token>(DRICE);
 	let sellAmount = $state('');
 	let buyAmount = $state('');

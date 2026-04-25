@@ -121,7 +121,7 @@
 	}
 
 	.marquee:hover .fixture:hover {
-		color: var(--color-text);
+		color: var(--color-text-muted);
 	}
 
 	.vs {
