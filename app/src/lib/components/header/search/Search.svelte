@@ -2,10 +2,10 @@
     import Searchbox from './searchbox/Searchbox.svelte';
 
     const rates = [
-        { label: 'USD/GBP', value: '£0.75' },
-        { label: 'sETH/GBP', value: '£15.49' },
-        { label: 'ETH/GBP', value: '£1549.39' },
-        { label: 'HPI-30/GBP', value: '£1150.19' }
+        { label: 'USD/GBP', value: '£ 0.7531' },
+        { label: 'sETH/GBP', value: '£ 15.490' },
+        { label: 'ETH/GBP', value: '£ 1549.39' },
+        { label: 'HPI-30/GBP', value: '£ 1150.19' }
     ] as const;
 </script>
 
@@ -49,10 +49,11 @@
         flex-direction: column;
         align-items: flex-start;
         justify-content: center;
-        gap: 3px;
+        gap: 4px;
         flex-shrink: 0;
         cursor: pointer;
         transition: opacity var(--transition-base);
+        margin-bottom: 2px;
     }
 
     .prices:hover .exchange-rate {
@@ -70,6 +71,7 @@
     .exchange-rate-label {
         margin-top: 2px;
         line-height: 1;
+        font-size: 9px;
     }
 
     .exchange-rate-value {

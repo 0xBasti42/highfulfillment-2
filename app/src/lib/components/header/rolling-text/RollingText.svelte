@@ -37,7 +37,7 @@
 
 <div class="rolling-text">
 	<div class="rolling-text-left">
-		<p class="rolling-text-title label-eyebrow">Matchweek {matchweekNumber}</p>
+		<p class="rolling-text-title label-eyebrow" style="font-size: 9px;">Matchweek {matchweekNumber}</p>
 		<p class="rolling-text-countdown">{countdown}</p>
 	</div>
 	<div class="rolling-text-right">

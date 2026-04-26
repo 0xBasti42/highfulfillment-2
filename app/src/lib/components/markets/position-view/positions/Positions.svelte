@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Loader from '../loader/Loader.svelte';
+
 	type PositionFilter = 'all' | 'profitable' | 'losing';
 
 	type PositionRow = {
@@ -90,6 +92,16 @@
 
 	let query = $state('');
 	let filter = $state<PositionFilter>('all');
+
+	const LOADING_DURATION_MS = 1200;
+	let isLoading = $state(true);
+
+	$effect(() => {
+		const timeoutId = setTimeout(() => {
+			isLoading = false;
+		}, LOADING_DURATION_MS);
+		return () => clearTimeout(timeoutId);
+	});
 
 	function pnlAbs(row: PositionRow): number {
 		return (row.mark - row.avgEntry) * row.size;
@@ -262,6 +274,7 @@
 					<p class="empty-text">No positions match the current filters.</p>
 				</div>
 			{/each}
+			<Loader visible={isLoading} label="Loading positions" />
 		</div>
 	</div>
 </div>
@@ -432,6 +445,7 @@
 	}
 
 	.positions-body {
+		position: relative;
 		flex: 1 1 auto;
 		min-height: 0;
 		overflow-y: auto;

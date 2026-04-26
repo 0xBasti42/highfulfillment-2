@@ -456,8 +456,9 @@
 		align-items: flex-start;
 		justify-content: center;
 		flex: 0 0 auto;
-		gap: 3px;
+		gap: 4px;
 		min-width: max-content;
+		margin-bottom: 1px;
 	}
 
 	.token-info-right-item p {
@@ -471,6 +472,7 @@
 	.token-info-right-item-label {
 		text-align: center;
 		white-space: nowrap;
+		font-size: 9px;
 	}
 
 	.token-info-right-item-value {

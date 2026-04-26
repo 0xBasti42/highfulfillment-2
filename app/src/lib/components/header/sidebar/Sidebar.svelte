@@ -176,13 +176,13 @@
 		padding: 7px 10px;
 		margin: 0;
 		font-size: var(--text-sm);
-		color: var(--color-text);
+		color: var(--color-text-muted);
 		border-radius: var(--radius-pill);
 		transition: color var(--transition-base);
 	}
 
 	.sidebar-list a:hover {
-		color: var(--color-text-muted);
+		color: var(--color-text);
 	}
 	
 	.sidebar-list a.active {

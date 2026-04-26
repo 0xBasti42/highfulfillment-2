@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Loader from '../loader/Loader.svelte';
+
 	type OrderFilter = 'all' | 'buy' | 'sell';
 	type OrderType = 'limit' | 'stop';
 	type OrderSide = 'buy' | 'sell';
@@ -117,6 +119,16 @@
 
 	let query = $state('');
 	let filter = $state<OrderFilter>('all');
+
+	const LOADING_DURATION_MS = 1200;
+	let isLoading = $state(true);
+
+	$effect(() => {
+		const timeoutId = setTimeout(() => {
+			isLoading = false;
+		}, LOADING_DURATION_MS);
+		return () => clearTimeout(timeoutId);
+	});
 
 	const filtered = $derived(
 		rows.filter((row) => {
@@ -298,6 +310,7 @@
 					<p class="empty-text">No open orders.</p>
 				</div>
 			{/each}
+			<Loader visible={isLoading} label="Loading orders" />
 		</div>
 	</div>
 </div>
@@ -493,6 +506,7 @@
 	}
 
 	.orders-body {
+		position: relative;
 		flex: 1 1 auto;
 		min-height: 0;
 		overflow-y: auto;

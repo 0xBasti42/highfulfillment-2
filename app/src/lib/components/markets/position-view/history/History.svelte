@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Loader from '../loader/Loader.svelte';
+
 	type EventFilter = 'all' | 'trades' | 'cancelled' | 'yield';
 	type TimeRange = '24h' | '7d' | '30d' | 'all';
 	type EventKind = 'buy' | 'sell' | 'cancelled' | 'yield';
@@ -163,6 +165,16 @@
 	let query = $state('');
 	let eventFilter = $state<EventFilter>('all');
 	let range = $state<TimeRange>('7d');
+
+	const LOADING_DURATION_MS = 1200;
+	let isLoading = $state(true);
+
+	$effect(() => {
+		const timeoutId = setTimeout(() => {
+			isLoading = false;
+		}, LOADING_DURATION_MS);
+		return () => clearTimeout(timeoutId);
+	});
 
 	function rangeStart(r: TimeRange): number {
 		switch (r) {
@@ -358,6 +370,7 @@
 					<p class="empty-text">No history matches the current filters.</p>
 				</div>
 			{/each}
+			<Loader visible={isLoading} label="Loading history" />
 		</div>
 	</div>
 </div>
@@ -495,6 +508,7 @@
 	}
 
 	.history-body {
+		position: relative;
 		flex: 1 1 auto;
 		min-height: 0;
 		overflow-y: auto;

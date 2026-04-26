@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Loader from '../loader/Loader.svelte';
+
 	type AssetClass = 'all' | 'players' | 'base';
 
 	type BalanceRow = {
@@ -34,6 +36,17 @@
 			valueGbp: 1287.45
 		},
 		{
+			image: '/tokens/seth-dec-3.svg',
+			alt: 'sETH',
+			symbol: 'sETH',
+			name: 'Stability ETH',
+			assetClass: 'base',
+			total: 0.812,
+			available: 0.812,
+			locked: 0,
+			valueGbp: 2418.7
+		},
+		{
 			image: '/tokens/usdc.svg',
 			alt: 'USDC',
 			symbol: 'USDC',
@@ -54,17 +67,6 @@
 			available: 1100.0,
 			locked: 140.0,
 			valueGbp: 1240.0
-		},
-		{
-			image: '/tokens/seth-dec-3.svg',
-			alt: 'sETH',
-			symbol: 'sETH',
-			name: 'StabilityETH',
-			assetClass: 'base',
-			total: 0.812,
-			available: 0.812,
-			locked: 0,
-			valueGbp: 2418.7
 		},
 		{
 			image: '/tokens/playerToken.svg',
@@ -128,6 +130,19 @@
 	let assetClass = $state<AssetClass>('all');
 
 	const SMALL_BALANCE_GBP = 10;
+
+	// Brief loading overlay on initial mount (and on every re-mount when the
+	// user navigates away and back via PositionView's `{#if activeTab === ...}`).
+	// Fixed duration matches Chart.svelte's mount-cover pattern.
+	const LOADING_DURATION_MS = 1200;
+	let isLoading = $state(true);
+
+	$effect(() => {
+		const timeoutId = setTimeout(() => {
+			isLoading = false;
+		}, LOADING_DURATION_MS);
+		return () => clearTimeout(timeoutId);
+	});
 
 	const filtered = $derived(
 		rows.filter((row) => {
@@ -260,6 +275,7 @@
 					<p class="empty-text">No balances match the current filters.</p>
 				</div>
 			{/each}
+			<Loader visible={isLoading} label="Loading balances" />
 		</div>
 	</div>
 </div>
@@ -436,6 +452,7 @@
 	}
 
 	.balances-body {
+		position: relative;
 		flex: 1 1 auto;
 		min-height: 0;
 		overflow-y: auto;
