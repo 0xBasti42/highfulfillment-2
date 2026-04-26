@@ -2,8 +2,8 @@
 </script>
 
 <div class="searchbox">
-    <p>Search markets, fixtures, clubs, etc.</p>
     <img src="/icons/search.svg" alt="Search" style="width: 15px; height: 15px; cursor: pointer;" />
+    <p>Search markets, fixtures, clubs, etc.</p>
 </div>
 
 <style>
@@ -17,7 +17,8 @@
 		padding: 0 10px 0 20px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
+        gap: 10px;
 		cursor: text;
 		transition: all var(--transition-base);
 	}

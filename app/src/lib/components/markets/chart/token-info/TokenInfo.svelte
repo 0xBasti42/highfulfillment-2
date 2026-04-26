@@ -90,9 +90,9 @@
 	const stats: Stat[] = [
 		{ label: 'Price GBP', value: '£ 1.6100' },
 		{ label: 'Price sETH', value: '♢ 0.0805' },
-		{ label: 'Liquidity', value: '£ 1.1m' },
-		{ label: 'FDV', value: '£ 17.71m' },
+		{ label: 'Depth', value: '£ 1.1m' },
 		{ label: 'Mcap', value: '£ 16.10m' },
+		{ label: 'FDV', value: '£ 32.20m' },
 		{ label: '24h change', value: '+0.1502 / +10.28%', positive: true },
 		{ label: '24h volume', value: '£ 33,894,612' },
 		{ label: 'Staked', value: '£ 3,954,354' },
@@ -112,9 +112,9 @@
 				style:--marquee-distance="{-nameOverflow}px"
 				bind:this={nameEl}
 			>
-				<span class="token-name-text-track">D. Rice</span>
+				<span class="token-name-text-track">G. Magalhaes <span style="font-size: 10px; color: var(--color-text-muted);">mGABR</span></span>
 			</p>
-			<p class="token-club-position">ARS<span class="sidebar-footer-sep" aria-hidden="true">·</span>d-Midfield</p>
+			<p class="token-club-position label-eyebrow" style="font-size: 10px; text-transform: none;">ARS<span class="sidebar-footer-sep" aria-hidden="true">·</span>c-Defence</p>
 		</div>
 		<div class="divider"></div>
 		<button
@@ -227,6 +227,7 @@
 	.token-info {
 		height: 60px;
 		width: 100%;
+		background-color: var(--color-surface-elevated);
 		border-bottom: 1px solid var(--color-border);
 		display: flex;
 		flex-direction: row;
@@ -253,7 +254,7 @@
 		flex-direction: column;
 		align-items: flex-start;
 		justify-content: center;
-		gap: 3px;
+		gap: 4px;
 	}
 
 	.token-name p {
@@ -275,7 +276,7 @@
 	}
 
 	.token-name .token-name-text {
-		font-size: 16px; /* make responsive 16/14 */
+		font-size: 14px; /* make responsive 16/14 */
 		font-weight: 400;
 		letter-spacing: 1px;
 		line-height: 1.2;
@@ -387,7 +388,6 @@
 
 	.token-info-right {
 		box-sizing: border-box;
-		background-color: var(--color-surface-elevated);
 		width: 100%;
 		height: 100%;
 		display: flex;

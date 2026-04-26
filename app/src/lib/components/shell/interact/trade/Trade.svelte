@@ -23,10 +23,10 @@
 
 	const AMOUNT_PATTERN = '[0-9]*[.,]?[0-9]*';
 
-	const DRICE: Token = {
+	const MGABR: Token = {
 		image: '/tokens/playerToken.svg',
 		alt: 'Player Token',
-		symbol: 'dRICE'
+		symbol: 'mGABR'
 	};
 
 	const SETH: Token = {
@@ -68,7 +68,7 @@
 	let mode = $state<TradeMode>('exchange');
 	let swapIconTurns = $state(0);
 	let tokenIn = $state<Token>(ETH);
-	let tokenOut = $state<Token>(DRICE);
+	let tokenOut = $state<Token>(MGABR);
 	let sellAmount = $state('');
 	let buyAmount = $state('');
 	// Placeholder rate expressed as units of tokenIn per 1 tokenOut.
@@ -121,7 +121,7 @@
 				<p class="label-eyebrow">{config.label}</p>
 			</div>
 			<div class="info-right">
-				<p class="label-eyebrow">{config.infoRight}</p>
+				<p class="label-eyebrow" style="text-transform: {config.infoRight.includes('Balance') ? 'uppercase' : 'none'}">{config.infoRight}</p>
 			</div>
 		</div>
 
@@ -346,7 +346,7 @@
 	}
 
 	.settings-icon-container:hover {
-		background-color: #20202090;
+		background-color: #202020;
 	}
 
 	.settings-icon-container:active {
@@ -358,10 +358,6 @@
 		height: 18px;
 		opacity: 0.5;
 		transition: all var(--transition-base);
-	}
-
-	.settings-icon-container:hover .settings-icon {
-		opacity: 0.8;
 	}
 
 	/* ---------- Body ---------- */

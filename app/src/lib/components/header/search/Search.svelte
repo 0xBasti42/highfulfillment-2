@@ -39,7 +39,7 @@
         display: flex;
         align-items: center;
         gap: 25px;
-        padding-left: 25px;
+        padding-left: 20px;
         border-left: 1px solid var(--color-border);
         overflow: hidden;
 	}

@@ -211,7 +211,7 @@
 		<div class="balances-toolbar-right">
 			<label class="toggle">
 				<input type="checkbox" bind:checked={hideSmall} />
-				<span>Hide small balances</span>
+				<span style="font-size: 10px;">Hide small balances</span>
 			</label>
 			<div class="total">
 				<span class="total-label">Total</span>
@@ -387,16 +387,7 @@
 		color: var(--color-text-muted);
 		letter-spacing: var(--tracking-default);
 		cursor: pointer;
-		transition: color var(--transition-base);
-	}
-
-	.toggle:hover {
-		color: var(--color-text);
-	}
-
-	.toggle input[type='checkbox'] {
-		accent-color: var(--color-primary);
-		cursor: pointer;
+		transition: all var(--transition-base);
 	}
 
 	.total {
@@ -405,7 +396,8 @@
 		align-items: baseline;
 		gap: 8px;
 		padding-left: 15px;
-		border-left: 1px solid var(--color-border-light);
+		border-left: 1px solid var(--color-border);
+        height: 40%;
 	}
 
 	.total-label {

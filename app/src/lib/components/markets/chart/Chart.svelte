@@ -464,11 +464,6 @@
 		cursor: pointer;
 	}
 
-	.toggle-row input[type='checkbox'] {
-		accent-color: var(--color-primary);
-		cursor: pointer;
-	}
-
 	.chart-loading {
 		position: absolute;
 		inset: 0;

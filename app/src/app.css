@@ -255,6 +255,70 @@ input::placeholder {
 	color: var(--color-text-muted);
 }
 
+/* Custom checkbox.
+
+   Native checkboxes don't expose their unchecked background to CSS — only
+   the checked fill via `accent-color`. We strip the native rendering with
+   `appearance: none` and paint the box ourselves so the unchecked state
+   reads as `--color-surface-muted` (matching the dark surface palette)
+   and the checked state reads as `--color-primary`.
+
+   The tick is a `::after` rotated rectangle with two coloured borders
+   forming an L-shape — tuned for the 14px box. If the box size changes,
+   the tick offsets and dimensions need re-tuning.
+
+   Hover state covers two cases: cursor directly over the box, and cursor
+   anywhere over a wrapping `<label>` (the dominant call-site pattern). */
+input[type='checkbox'] {
+	appearance: none;
+	-webkit-appearance: none;
+	box-sizing: border-box;
+	position: relative;
+	width: 14px;
+	height: 14px;
+	margin: 0;
+	flex-shrink: 0;
+	background-color: var(--color-surface-muted);
+	border: 1px solid var(--color-border);
+	border-radius: 3px;
+	cursor: pointer;
+	transition:
+		background-color var(--transition-base),
+		border-color var(--transition-base);
+}
+
+input[type='checkbox']:hover,
+label:hover input[type='checkbox'] {
+	border-color: var(--color-border-strong);
+}
+
+input[type='checkbox']:checked {
+	background-color: var(--color-text-muted);
+	border-color: var(--color-border);
+}
+
+input[type='checkbox']:checked::after {
+	content: '';
+	position: absolute;
+	left: 4px;
+	top: 1px;
+	width: 3px;
+	height: 7px;
+	border: solid var(--color-text-inverse);
+	border-width: 0 1.5px 1.5px 0;
+	transform: rotate(45deg);
+}
+
+input[type='checkbox']:focus-visible {
+	outline: 2px solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+input[type='checkbox']:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
 /* --------------------------------------------------------------------------
    Buttons
    -------------------------------------------------------------------------- */
