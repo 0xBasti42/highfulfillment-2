@@ -27,16 +27,21 @@
 		cursor: pointer;
 	}
 
+	/* Three small round dots stacked vertically as a hover indicator.
+	   The element paints the middle dot directly; `box-shadow` paints the
+	   two flanking dots at ±5px Y so the whole stack is one positioned box. */
 	.logo::before {
 		content: '';
 		position: absolute;
 		left: -8px;
 		top: 50%;
-		width: 2px;
-		height: 12px;
+		width: 3px;
+		height: 3px;
 		background-color: var(--color-border-strong);
-		border-radius: 1px;
-		opacity: 0;
+		border-radius: 50%;
+		box-shadow:
+			0 -5px 0 var(--color-border-strong),
+			0 5px 0 var(--color-border-strong);
 		transform: translate(-2px, -50%);
 		transition:
 			opacity var(--transition-base),
@@ -46,7 +51,7 @@
 	}
 
 	.logo:hover::before {
-		opacity: 0;
+		opacity: 1;
 		transform: translate(0, -50%);
 	}
 

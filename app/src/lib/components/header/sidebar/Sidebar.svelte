@@ -29,19 +29,24 @@
 		{
 			title: 'Network',
 			items: [
-				{ label: 'API', href: '/network/api' },
-				{ label: 'Explorer', href: '/network/explorer' },
-				{ label: 'Stats', href: '/network/stats' },
-				{ label: 'Health Check', href: '/network/health' }
+				{ label: 'API', href: 'https://docs.highpotential.io/api' },
+				{ label: 'Explorer', href: 'https://explorer.highpotential.io/' },
+				{ label: 'Stats', href: 'https://stats.highpotential.io/' },
+				{ label: 'Health Check', href: 'https://health.highpotential.io/' }
+			]
+		},
+		{
+			title: 'Community',
+			items: [
+				{ label: 'Announcements', href: '/announcements' }
 			]
 		},
 		{
 			title: 'Misc.',
 			items: [
-				{ label: 'Announcements', href: '/announcements' },
-				{ label: 'Whitepaper', href: '/whitepaper' },
-				{ label: 'Developers', href: '/developers' },
-				{ label: 'EF Mandate', href: '/ef-mandate' }
+				{ label: 'Whitepaper', href: 'https://whitepaper.highpotential.io/' },
+				{ label: 'Docs', href: 'https://docs.highpotential.io/' },
+				{ label: 'EF Mandate', href: 'https://etherscan.io/idm?addresses=0x5642e5ff9e48e0659060aee428754a6dd10f5b08&type=1' }
 			]
 		}
 	];
@@ -55,6 +60,10 @@
 	function isActive(href: string): boolean {
 		const path = page.url.pathname;
 		return path === href || path.startsWith(href + '/');
+	}
+
+	function isExternal(href: string): boolean {
+		return /^https?:\/\//i.test(href);
 	}
 
 	function onKeydown(event: KeyboardEvent) {
@@ -84,20 +93,29 @@
 		<nav class="sidebar-body">
 			{#each sections as section}
 				<section class="sidebar-section">
-					<h6 class="label-eyebrow">{section.title}</h6>
+					<h6 class="label-eyebrow" style="color: var(--color-text-faded);">{section.title}</h6>
 					<ul class="sidebar-list">
-						{#each section.items as item}
-							<li>
-								<a
-									href={item.href}
-									class:active={isActive(item.href)}
-									onclick={() => sidebar.close()}
-								>
-									<span class="sidebar-list-label">{item.label}</span>
-									<i class="fa-solid fa-chevron-right sidebar-list-chevron" aria-hidden="true"></i>
-								</a>
-							</li>
-						{/each}
+					{#each section.items as item}
+						{@const external = isExternal(item.href)}
+						<li>
+							<a
+								href={item.href}
+								class:active={isActive(item.href)}
+								class:external
+								target={external ? '_blank' : undefined}
+								rel={external ? 'noopener noreferrer' : undefined}
+								onclick={() => sidebar.close()}
+							>
+								<span class="sidebar-list-label">{item.label}</span>
+								<i
+									class="fa-solid sidebar-list-chevron {external
+										? 'fa-arrow-up-right-from-square'
+										: 'fa-chevron-right'}"
+									aria-hidden="true"
+								></i>
+							</a>
+						</li>
+					{/each}
 					</ul>
 				</section>
 			{/each}
@@ -105,9 +123,17 @@
 
 		<footer class="sidebar-footer">
 			{#each footerLinks as link, i}
-				<a href={link.href} onclick={() => sidebar.close()}>{link.label}</a>
+				{@const external = isExternal(link.href)}
+				<a
+					href={link.href}
+					target={external ? '_blank' : undefined}
+					rel={external ? 'noopener noreferrer' : undefined}
+					onclick={() => sidebar.close()}
+				>
+					{link.label}
+				</a>
 				{#if i < footerLinks.length - 1}
-					<span class="sidebar-footer-sep" aria-hidden="true">·</span>
+					<span class="sidebar-footer-sep" aria-hidden="true">|</span>
 				{/if}
 			{/each}
 		</footer>
@@ -210,13 +236,21 @@
 		opacity: 1;
 	}
 
+	.sidebar-list a.external .sidebar-list-chevron {
+		opacity: 0;
+	}
+
+	.sidebar-list a.external:hover .sidebar-list-chevron {
+		opacity: 0.7;
+	}
+
 	.sidebar-footer {
 		flex: 0 0 auto;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 4px;
-		padding: 10px;
+		padding: 5px 10px;
 		border-top: 1px solid var(--color-border);
 	}
 
@@ -228,10 +262,11 @@
 
 	.sidebar-footer a:hover {
 		color: var(--color-text);
+		text-decoration: underline;
 	}
 
 	.sidebar-footer-sep {
-		color: var(--color-text-faded);
+		color: var(--color-border-strong);
 		font-size: 11px;
 		user-select: none;
 	}

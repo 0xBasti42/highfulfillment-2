@@ -8,10 +8,15 @@
 		symbol: string;
 	};
 
+	type InfoSegment =
+		| { kind: 'label'; text: string }
+		| { kind: 'ticker'; text: string }
+		| { kind: 'number'; text: string };
+
 	type TradeSideConfig = {
 		side: TradeSide;
 		label: string;
-		infoRight: string;
+		infoRight: InfoSegment[];
 		tokenImage: string;
 		tokenAlt: string;
 		tokenSymbol: string;
@@ -80,7 +85,10 @@
 	const sellSide: TradeSideConfig = $derived({
 		side: 'input',
 		label: 'From',
-		infoRight: 'Balance: 0.00',
+		infoRight: [
+			{ kind: 'label', text: 'Balance:' },
+			{ kind: 'number', text: '0.00' }
+		],
 		tokenImage: tokenIn.image,
 		tokenAlt: tokenIn.alt,
 		tokenSymbol: tokenIn.symbol,
@@ -93,7 +101,13 @@
 	const buySide: TradeSideConfig = $derived({
 		side: 'output',
 		label: 'To',
-		infoRight: `1 ${tokenOut.symbol} = ${formattedRate} ${tokenIn.symbol}`,
+		infoRight: [
+			{ kind: 'number', text: '1' },
+			{ kind: 'ticker', text: tokenOut.symbol },
+			{ kind: 'number', text: '=' },
+			{ kind: 'number', text: formattedRate },
+			{ kind: 'ticker', text: tokenIn.symbol }
+		],
 		tokenImage: tokenOut.image,
 		tokenAlt: tokenOut.alt,
 		tokenSymbol: tokenOut.symbol,
@@ -121,7 +135,15 @@
 				<p class="label-eyebrow">{config.label}</p>
 			</div>
 			<div class="info-right">
-				<p class="label-eyebrow" style="text-transform: {config.infoRight.includes('Balance') ? 'uppercase' : 'none'}">{config.infoRight}</p>
+				{#each config.infoRight as seg}
+					{#if seg.kind === 'number'}
+						<p class="info-number">{seg.text}</p>
+					{:else if seg.kind === 'ticker'}
+						<p class="label-eyebrow info-ticker">{seg.text}</p>
+					{:else}
+						<p class="label-eyebrow">{seg.text}</p>
+					{/if}
+				{/each}
 			</div>
 		</div>
 
@@ -445,6 +467,41 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 0 20px 10px;
+	}
+
+	.info-right {
+		display: flex;
+		flex-direction: row;
+		align-items: baseline;
+		gap: 4px;
+		transition: opacity var(--transition-base);
+	}
+
+	.info-ticker {
+		text-transform: none;
+	}
+
+	.info-number {
+		margin: 0;
+		font-size: var(--text-sm);
+		font-weight: 400;
+		color: var(--color-text-muted);
+		line-height: 1;
+		transition: all var(--transition-base);
+	}
+
+	/* Sell-side balance is interactive (future: click to MAX-fill).
+	   Brighten the number on hover and dim the row on press. */
+	.input-output.input .info-right {
+		cursor: pointer;
+	}
+
+	.input-output.input .info-right:hover .info-number {
+		color: var(--color-text);
+	}
+
+	.input-output.input .info-right:active .info-number {
+		color: var(--color-text-muted);
 	}
 
 	.asset-selector-right {

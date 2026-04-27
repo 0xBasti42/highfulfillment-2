@@ -114,7 +114,7 @@
 			>
 				<span class="token-name-text-track">G. Magalhaes <span style="font-size: 10px; color: var(--color-text-muted);">mGABR</span></span>
 			</p>
-			<p class="token-club-position label-eyebrow" style="font-size: 10px; text-transform: none;">ARS<span class="sidebar-footer-sep" aria-hidden="true">·</span>c-Defence</p>
+			<p class="token-club-position label-eyebrow" style="font-size: 11px; text-transform: none;">ARS<span class="sidebar-footer-sep" aria-hidden="true">·</span>c-Defence</p>
 		</div>
 		<div class="divider"></div>
 		<button
