@@ -1,0 +1,30 @@
+{
+  "name": "highpotential-relay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static-IP HTTP relay for HighPotential data-provider integrations.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/rate-limit": "^10.2.1",
+    "dotenv": "^16.4.5",
+    "fastify": "^5.1.0",
+    "undici": "^6.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

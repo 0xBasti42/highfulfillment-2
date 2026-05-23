@@ -7,10 +7,12 @@
 	}
 
 	let { data }: Props = $props();
+
+	let activeCurrency = $state('USD');
 </script>
 
 <svelte:head>
-	<title>EPL | dRICE-GBP</title>
+	<title>EPL | mGABR-{activeCurrency}</title>
 </svelte:head>
 
 <div class="markets" data-section={data.section}>

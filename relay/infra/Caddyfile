@@ -1,0 +1,33 @@
+{
+	email {$RELAY_ACME_EMAIL}
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$RELAY_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	@health path /v1/health
+	handle @health {
+		reverse_proxy relay:3000
+	}
+
+	handle {
+		reverse_proxy relay:3000 {
+			header_up X-Forwarded-Host {host}
+		}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

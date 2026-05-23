@@ -1,6 +1,6 @@
 <svg width="1000" height="1000" viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g clip-path="url(#clip0_775_119)">
-<rect width="1000" height="1000" fill="#101010"/>
+<rect width="1000" height="1000" fill="black"/>
 <mask id="mask0_775_119" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="267" y="157" width="466" height="686">
 <rect x="267.596" y="157.6" width="464.808" height="684.8" fill="url(#pattern0_775_119)"/>
 </mask>

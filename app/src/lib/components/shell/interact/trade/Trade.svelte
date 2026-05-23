@@ -382,10 +382,6 @@
 		transition: all var(--transition-base);
 	}
 
-	.settings-icon-container:hover .settings-icon {
-		opacity: 0.8;
-	}
-
 	/* ---------- Body ---------- */
 	.trade-body {
 		width: 100%;
@@ -517,6 +513,18 @@
 		gap: 5px;
 	}
 
+	/* Dropdown's interaction signature is the progressive chevron dip:
+	   idle → 0px, hover → 1px, active → 2px, brightening through
+	   text-faded → text-muted → text. The downward motion previews the
+	   "opens downward" semantic without committing to the 180° rotation
+	   that means "menu is open" in established UI grammar.
+
+	   Hover lifts the bg + outer border + inner image border together so
+	   the whole control reads as one cohesive surface rather than a
+	   bordered button with an image inside it. Press darkens the bg one
+	   step below resting (elevated → surface) and snaps via 80ms — at
+	   30px tall a transform would feel like a glitch, so all the press
+	   feedback is colour-driven. */
 	.asset-dropdown {
 		all: unset;
 		box-sizing: border-box;
@@ -535,10 +543,11 @@
 
 	.asset-dropdown:hover {
 		background-color: var(--color-surface-muted);
+		border-color: var(--color-border-strong);
 	}
 
 	.asset-dropdown:active {
-		background-color: var(--color-surface-elevated);
+		background-color: var(--color-surface);
 	}
 
 	.asset-dropdown-left-image {
@@ -546,6 +555,11 @@
 		height: 20px;
 		border-radius: 5px;
 		border: 1px solid var(--color-border);
+		transition: border-color var(--transition-fast);
+	}
+
+	.asset-dropdown:hover .asset-dropdown-left-image {
+		border-color: var(--color-border-strong);
 	}
 
 	.asset-dropdown-name {
@@ -558,8 +572,19 @@
 		margin-left: 5px;
 		font-size: 11px;
 		color: var(--color-text-faded);
-		transition: color var(--transition-base);
 		line-height: 1.1;
+		margin-top: 1px;
+		transition:
+			color var(--transition-fast),
+			transform var(--transition-fast);
+	}
+
+	.asset-dropdown:hover .asset-dropdown-icon {
+		color: var(--color-text-muted);
+	}
+
+	.asset-dropdown:active .asset-dropdown-icon {
+		color: var(--color-text);
 	}
 
 	.asset-selector-right-item {
@@ -581,13 +606,12 @@
 
 	.asset-selector-right-item:hover {
 		opacity: 1;
-		background-color: var(--color-surface-muted);
-		border-color: var(--color-border-light);
+		border-color: var(--color-border);
 	}
 
 	.asset-selector-right-item:active {
 		opacity: 0.8;
-		background-color: var(--color-surface-elevated);
+		background-color: var(--color-surface-muted);
 		border-color: var(--color-border);
 	}
 
@@ -654,11 +678,14 @@
 	}
 
 	.swap-button:hover {
-		background: linear-gradient(to right, var(--color-primary-light) -20%, var(--color-primary) 100%);
+		filter: brightness(1.08);
+		box-shadow: 0 0 16px -4px color-mix(in oklab, var(--color-primary-light) 40%, transparent);
 	}
 
 	.swap-button:active {
-		opacity: 0.8;
+		filter: brightness(0.97);
+		box-shadow: none;
+		transition-duration: 80ms;
 	}
 
 	.swap-info {

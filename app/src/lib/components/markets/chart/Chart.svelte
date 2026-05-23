@@ -319,6 +319,7 @@
 	}
 
 	.settings-button:hover {
+		box-shadow: none;
 		color: var(--color-text);
 		background-color: var(--color-surface-muted);
 		border-top: 1px solid transparent;
@@ -326,6 +327,7 @@
 	}
 
 	.settings-button:active {
+		background-color: var(--color-surface-muted);
 		opacity: 0.8;
 	}
 
@@ -336,12 +338,8 @@
 		transition: opacity var(--transition-base);
 	}
 
-	.settings-button:hover .settings-button-icon {
-		opacity: 0.8;
-	}
-
 	.settings-button[aria-expanded='true'] .settings-button-icon {
-		opacity: 1;
+		opacity: 0.8;
 	}
 
 	.settings-panel {

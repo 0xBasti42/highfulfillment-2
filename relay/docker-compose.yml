@@ -1,0 +1,57 @@
+name: relay
+
+services:
+  relay:
+    image: ${RELAY_IMAGE:-ghcr.io/highpotential/highpotential-relay:latest}
+    container_name: relay
+    restart: always
+    env_file:
+      - .env
+    expose:
+      - "3000"
+    networks:
+      - edge
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: relay-caddy
+    restart: always
+    depends_on:
+      - relay
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - RELAY_DOMAIN=${RELAY_DOMAIN}
+      - RELAY_ACME_EMAIL=${RELAY_ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+networks:
+  edge:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
