@@ -4,10 +4,11 @@ pragma solidity ^0.8.34;
 enum Status { Pending, Active, Completed }
 
 struct Matchweek {
+    uint16 seasonStartYear;
     uint8 matchweekNumber;
+    Status status;
     uint256 startTime;
     uint256 endTime;
-    Status status;
 }
 
 enum EventType {
@@ -27,6 +28,7 @@ struct Event {
 }
 
 struct Fixture {
+    uint16 seasonStartYear;
     uint8 matchweekNumber;
     uint256 fixtureId;
     string fixtureName;

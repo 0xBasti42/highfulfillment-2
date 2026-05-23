@@ -16,6 +16,11 @@ library Errors {
     error OracleNotConfigured();
     error EmptySource();
     error MatchweekNotLive();
+    error MatchweekAlreadyExists(uint16 seasonStartYear, uint8 matchweekNumber);
+    error MatchweekDoesNotExist(uint16 seasonStartYear, uint8 matchweekNumber);
+    error InvalidMatchweekNumber();
+    error InvalidSeasonStartYear();
+    error CurrentSeasonNotEnded(uint256 endTime);
     error RateLimited(uint256 nextAllowed);
     error ZeroCooldown();
 }
