@@ -10,12 +10,33 @@ struct Matchweek {
     Status status;
 }
 
+enum EventType {
+    Goal,
+    Assist,
+    YellowCard,
+    RedCard,
+    Substitution,
+    Penalty,
+    PenaltyMissed
+}
+
+struct Event {
+    EventType eventType;
+    string personId;
+    uint256 eventTime;
+}
+
 struct Fixture {
+    uint8 matchweekNumber;
     uint256 fixtureId;
     string fixtureName;
-    uint8 matchweekNumber;
     string homeShorthand;
+    uint16 homeScore;
+    Event[] homeEvents;
     string awayShorthand;
+    uint16 awayScore;
+    Event[] awayEvents;
     uint256 startTime;
-    Status status;
+    uint256 endTime;
+    Status status; // Pending, Active, Completed
 }
