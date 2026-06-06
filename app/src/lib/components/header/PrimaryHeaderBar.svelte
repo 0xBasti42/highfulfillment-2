@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Logo from './logo/Logo.svelte';
 	import MainMenu from './main-menu/MainMenu.svelte';
+	import NetworkSelector from './network-selector/NetworkSelector.svelte';
 </script>
 
 <div class="header">
@@ -10,10 +11,7 @@
     </div>
     <div class="header-right">
         <div class="header-right-item">
-            <div class="active-chain">
-                <div class="active-chain-icon"></div>
-                <p class="active-chain-name">Base</p>
-            </div>
+            <NetworkSelector />
         </div>
         <div class="header-right-item">
             <button class="button">Connect</button>
@@ -67,32 +65,5 @@
 
     .button:active {
         opacity: 1;
-    }
-
-    .active-chain {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 5px;
-        background-color: var(--color-surface-muted);
-        border-radius: var(--radius-pill);
-        padding: 5px;
-        padding-right: 10px; /* 15px || 10px */
-        opacity: 1;
-    }
-
-    .active-chain-icon {
-        width: 15px;
-        height: 15px;
-        border-radius: 5%;
-        background-color: #0000ff; /* #000000 || #0000ff */
-    }
-
-    .active-chain-name {
-        font-size: 11px;
-        font-weight: 400;
-        letter-spacing: 1px;
-        color: var(--color-text);
     }
 </style>

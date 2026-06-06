@@ -9,7 +9,9 @@ import { Matchweek, Status } from "@core/types/FixtureTypes.sol";
 
 contract Matchweeks is AccessControl, RateLimit, Oracle {
     uint16 public currentSeason;
-    uint8 public currentMatchweek;
+
+    uint8 public liveMatchweek;
+    uint8 public tradingMatchweek;
 
     /// @notice Returns the Matchweek struct for a given season and matchweek.
     mapping(uint16 seasonStartYear => mapping(uint8 matchweekNumber => Matchweek matchweek)) public getMatchweek;
@@ -36,7 +38,8 @@ contract Matchweeks is AccessControl, RateLimit, Oracle {
 
         uint16 seasonStartYear = 2026;
         currentSeason = seasonStartYear;
-        currentMatchweek = 1;
+        liveMatchweek = 1;
+        tradingMatchweek = 1;
 
         uint8 totalMatchweeks = 38;
 
@@ -68,7 +71,8 @@ contract Matchweeks is AccessControl, RateLimit, Oracle {
 
         uint16 seasonStartYear = currentSeason + 1;
         currentSeason = seasonStartYear;
-        currentMatchweek = 1;
+        liveMatchweek = 1;
+        tradingMatchweek = 1;
 
         uint8 totalMatchweeks = 38;
 
@@ -111,6 +115,9 @@ contract Matchweeks is AccessControl, RateLimit, Oracle {
             uint64 endTime = _readUint64(response, base + 9);
             _editTimes(number, startTime, endTime);
         }
+
+        // liveMatchweek = filter(matchweek.endTime >= block.timestamp).sort(Matchweek.startTime) => matchweekNumber
+        // tradingMatchweek = filter(matchweek.endTime >= block.timestamp).sort(Matchweek.startTime) => matchweekNumber or matchweekNumber + 1
     }
 
     function _readUint64(bytes memory data, uint256 offset) private pure returns (uint64 value) {

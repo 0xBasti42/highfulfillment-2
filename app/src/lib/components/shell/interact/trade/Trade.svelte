@@ -1,5 +1,6 @@
 <script lang="ts">
-	type TradeMode = 'exchange' | 'advanced' | 'stake';
+	// type TradeMode = 'exchange' | 'advanced' | 'stake';
+	type TradeMode = 'exchange';
 	type TradeSide = 'input' | 'output';
 
 	type Token = {
@@ -201,7 +202,7 @@
 				<p class="trade-header-label">Exchange</p>
 			</button>
 			<div class="divider" aria-hidden="true"></div>
-			<button
+			<!-- <button
 				type="button"
 				class="trade-header-left-item"
 				class:active={mode === 'advanced'}
@@ -209,8 +210,8 @@
 				onclick={() => selectMode('advanced')}
 			>
 				<p class="trade-header-label">Advanced</p>
-			</button>
-			<div class="divider" aria-hidden="true"></div>
+			</button> -->
+			<!-- <div class="divider" aria-hidden="true"></div> -->
 		</div>
 		<div class="trade-header-right">
 			<div class="trade-header-right-item">
@@ -575,16 +576,18 @@
 		line-height: 1.1;
 		margin-top: 1px;
 		transition:
-			color var(--transition-fast),
+			color var(--transition-base),
 			transform var(--transition-fast);
 	}
 
 	.asset-dropdown:hover .asset-dropdown-icon {
 		color: var(--color-text-muted);
+		transform: translateY(1px);
 	}
 
 	.asset-dropdown:active .asset-dropdown-icon {
 		color: var(--color-text);
+		transform: translateY(2px);
 	}
 
 	.asset-selector-right-item {

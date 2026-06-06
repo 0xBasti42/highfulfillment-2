@@ -31,6 +31,10 @@ pragma solidity ^0.8.34;
 //  * `DiamondArgs.owner` is replaced by `VersionedProxyArgs.versionedProxyAdmin`.
 //    The proxy has no owner; the sole authority over cuts, pause and
 //    metadata is a VersionedProxyAdmin contract set once at deployment.
+//    The authority check is enforced at the LibDiamond layer, so any
+//    future facet that reaches into LibDiamond's privileged mutators
+//    cannot bypass it — it is not only the DiamondCutFacet / GovernanceFacet
+//    wrappers that hold the line.
 //
 //  * The fallback consults `selectorPaused` before routing. A paused
 //    selector reverts at the proxy layer, regardless of whether the
@@ -60,10 +64,22 @@ contract VersionedProxy {
     }
 
     constructor(IDiamondCut.FacetCut[] memory _diamondCut, VersionedProxyArgs memory _args) payable {
-        LibDiamond.setVersionedProxyAdmin(_args.versionedProxyAdmin);
-
+        // Bootstrap sequence. The ordering matters:
+        //   1. Infrastructure whitelist pass (pure check, no state).
+        //   2. Initial cut while `versionedProxyAdmin` is still zero — this is
+        //      the only moment at which LibDiamond.diamondCut will accept a
+        //      caller other than the admin (see
+        //      enforceIsVersionedProxyAdminOrUninitialized).
+        //   3. Pin the admin. From this SSTORE onwards every privileged
+        //      mutator in LibDiamond requires `msg.sender == admin`, so the
+        //      constructor is the only path that can write the initial
+        //      infrastructure facets.
+        //   4. Register ERC-165 interface IDs for loupe discovery.
+        //
+        // Constructors revert atomically; partial state cannot survive.
         _enforceInfrastructureOnly(_diamondCut);
         LibDiamond.diamondCut(_diamondCut, address(0), new bytes(0));
+        LibDiamond.setVersionedProxyAdmin(_args.versionedProxyAdmin);
 
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
         ds.supportedInterfaces[type(IERC165).interfaceId] = true;

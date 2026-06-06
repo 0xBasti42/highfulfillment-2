@@ -13,7 +13,7 @@
 			items: [
 				{ label: 'Markets', href: '/markets' },
 				{ label: 'Vaults', href: '/vaults' },
-				{ label: 'Binaries', href: '/binaries' },
+				// { label: 'Binaries', href: '/binaries' },
 				{ label: 'Fixtures', href: '/fixtures' }
 			]
 		},

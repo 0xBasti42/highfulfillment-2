@@ -6,7 +6,7 @@
 	const navItems = [
 		{ href: '/markets', label: 'Markets' },
 		{ href: '/vaults', label: 'Vaults' },
-		{ href: '/binaries', label: 'Binaries' },
+		// { href: '/binaries', label: 'Binaries' },
 		{ href: '/fixtures', label: 'Fixtures' }
 	] as const;
 

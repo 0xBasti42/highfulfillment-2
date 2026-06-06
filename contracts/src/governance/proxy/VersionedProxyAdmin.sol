@@ -177,6 +177,9 @@ contract VersionedProxyAdmin {
         minDelay = _minDelay;
     }
 
+    // Ownable.sol might be better. Just set the owner as the multisig.
+    // Orchestrator is best kept for market deployments, migrations, and discontinuations.
+    // VersionedProxyAdmin then has additional protections in place for versioning and other admin actions.
     modifier onlyExecutor() {
         if (msg.sender != executor) revert NotExecutor(msg.sender);
         _;

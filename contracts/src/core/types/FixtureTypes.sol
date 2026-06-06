@@ -7,6 +7,7 @@ struct Matchweek {
     uint16 seasonStartYear;
     uint8 matchweekNumber;
     Status status;
+    Fixture[] fixtures;
     uint256 startTime;
     uint256 endTime;
 }

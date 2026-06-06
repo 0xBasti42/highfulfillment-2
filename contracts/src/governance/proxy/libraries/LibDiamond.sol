@@ -35,6 +35,14 @@ pragma solidity ^0.8.34;
 //     field. Cuts, pause, and metadata changes are gated on a
 //     single authority that is set once at deployment (via
 //     `setVersionedProxyAdmin`) and subsequently immutable.
+//     The authority check lives *inside* this library — every
+//     privileged mutator (diamondCut, freezeDiamond,
+//     setSelectorPaused, setSelectorMeta, setSelectorDeprecated)
+//     begins with enforceIsVersionedProxyAdmin, so a future facet
+//     that inadvertently exposes one of these library entry points
+//     cannot silently become a privilege-escalation gateway. The
+//     facet-level wrappers keep the same call as an auditor-facing
+//     declaration of intent (defence in depth).
 //
 //  3. Selector pause: per-selector boolean flag consulted by the
 //     proxy's fallback. Pausing is retroactive (works for any
@@ -172,6 +180,20 @@ library LibDiamond {
         }
     }
 
+    /// @dev Variant used by `diamondCut` only: passes if either the caller is
+    ///      the admin, or if the admin has not yet been set. The latter case
+    ///      covers the one-shot bootstrap cut executed inside the
+    ///      VersionedProxy constructor, which runs before the admin address
+    ///      is installed. Once `setVersionedProxyAdmin` has pinned a non-zero
+    ///      admin, this helper behaves identically to
+    ///      `enforceIsVersionedProxyAdmin` — so post-construction there is no
+    ///      window in which cuts can be attempted by anyone else.
+    function enforceIsVersionedProxyAdminOrUninitialized() internal view {
+        address admin = diamondStorage().versionedProxyAdmin;
+        if (admin == address(0)) return;
+        if (msg.sender != admin) revert NotVersionedProxyAdmin(msg.sender);
+    }
+
     // --------------------------------------------
     //  Freeze
     // --------------------------------------------
@@ -181,6 +203,7 @@ library LibDiamond {
     }
 
     function freezeDiamond() internal {
+        enforceIsVersionedProxyAdmin();
         DiamondStorage storage ds = diamondStorage();
         ds.frozen = true;
         emit DiamondFrozen(block.timestamp);
@@ -199,6 +222,7 @@ library LibDiamond {
         address _init,
         bytes memory _calldata
     ) internal {
+        enforceIsVersionedProxyAdminOrUninitialized();
         enforceNotFrozen();
 
         uint256 len = _diamondCut.length;
@@ -288,6 +312,7 @@ library LibDiamond {
     // --------------------------------------------
 
     function setSelectorPaused(bytes4 selector, bool paused) internal {
+        enforceIsVersionedProxyAdmin();
         DiamondStorage storage ds = diamondStorage();
         if (ds.facetAddressAndSelectorPosition[selector].facetAddress == address(0)) {
             revert SelectorNotRegistered(selector);
@@ -316,6 +341,7 @@ library LibDiamond {
         bytes32 family,
         uint32 version
     ) internal {
+        enforceIsVersionedProxyAdmin();
         DiamondStorage storage ds = diamondStorage();
 
         if (ds.facetAddressAndSelectorPosition[selector].facetAddress == address(0)) {
@@ -346,6 +372,7 @@ library LibDiamond {
     }
 
     function setSelectorDeprecated(bytes4 selector, bool deprecated) internal {
+        enforceIsVersionedProxyAdmin();
         DiamondStorage storage ds = diamondStorage();
         if (ds.facetAddressAndSelectorPosition[selector].facetAddress == address(0)) {
             revert SelectorNotRegistered(selector);

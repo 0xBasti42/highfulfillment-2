@@ -6,6 +6,19 @@ import { Oracle } from "@core/Oracle.sol";
 import { RateLimit } from "@core/RateLimit.sol";
 import { Player, SeasonMinutes } from "@core/types/PlayerTypes.sol";
 
+/* 
+Add multiple storage objects:
+- inactive players
+- active players
+
+Add multiple scripts:
+- Minutes played per player, daily rate limit, version control to check for changes.
+- Squads => Eligibility update. Gets called automatically when updating minutes per player.
+- Squads => metadata sync. Gets called automatically when updating minutes per player.
+
+Leave space for calling deploy/discontinue, according to result of eligibility scan.
+*/
+
 contract Players is AccessControl, RateLimit, Oracle {
     string public getSquads;
     uint256 public playerCount;

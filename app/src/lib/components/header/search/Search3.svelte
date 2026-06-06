@@ -14,7 +14,7 @@
         { label: 'USD/GBP', value: '£0.75' },
         { label: 'sETH/GBP', value: '£15.49' },
         { label: 'ETH/GBP', value: '£1549.39' },
-        { label: 'HPI-30/GBP', value: '£1150.19' }
+        // { label: 'HPI-30/GBP', value: '£1150.19' }
     ] as const;
 </script>
 

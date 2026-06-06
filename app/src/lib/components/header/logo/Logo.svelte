@@ -60,20 +60,23 @@
 		height: 25px;
 		border-radius: 5px;
 		border: 1px solid var(--color-border);
+		filter: grayscale(1);
 		/* `cubic-bezier(0.34, 1.56, 0.64, 1)` on transform is "back" easing —
 		   the y-value > 1 makes the interpolation overshoot the target before
-		   settling. That's what gives the press its springy bounce. Border
-		   and opacity stay on default easing — only the geometry should
-		   spring. */
+		   settling. That's what gives the press its springy bounce. Border,
+		   opacity and filter stay on default easing — only the geometry
+		   should spring. */
 		transition:
 			transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
 			border-color var(--transition-base),
-			opacity var(--transition-base);
+			opacity var(--transition-base),
+			filter var(--transition-base);
 	}
 
 	.logo:hover img {
 		border-color: var(--color-border-strong);
 		transform: translateX(3px);
+		filter: grayscale(0);
 	}
 
 	.logo:active img {
