@@ -2,6 +2,7 @@
 	import Logo from './logo/Logo.svelte';
 	import MainMenu from './main-menu/MainMenu.svelte';
 	import NetworkSelector from './network-selector/NetworkSelector.svelte';
+	import { signup } from '$lib/state/signup.svelte';
 </script>
 
 <div class="header">
@@ -14,7 +15,7 @@
             <NetworkSelector />
         </div>
         <div class="header-right-item">
-            <button class="button">Connect</button>
+            <button type="button" class="button" onclick={() => signup.open()}>Connect</button>
         </div>
     </div>
 </div>

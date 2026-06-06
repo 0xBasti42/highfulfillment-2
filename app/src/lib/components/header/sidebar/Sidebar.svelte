@@ -163,7 +163,7 @@
 		flex-direction: column;
 		background-color: var(--color-surface-elevated);
 		border-right: 1px solid var(--color-border);
-		box-shadow: 4px 0 24px 0 rgba(0, 0, 0, 0.35);
+		box-shadow: 4px 0 10px 0 rgba(0, 0, 0, 0.05);
 		overflow: hidden;
 	}
 

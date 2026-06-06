@@ -5,6 +5,7 @@
 	import AppHeader from '$lib/components/header/Header.svelte';
 	import AppFooter from '$lib/components/footer/Footer.svelte';
 	import Sidebar from '$lib/components/header/sidebar/Sidebar.svelte';
+	import SignupModal from '$lib/components/signup-modal/SignupModal.svelte';
 	import MainColumn from '$lib/components/shell/MainColumn.svelte';
 	import Side from '$lib/components/shell/Side.svelte';
 
@@ -33,6 +34,7 @@
 		</div>
 	</div>
 	<Sidebar />
+	<SignupModal />
 </main>
 
 <style>
