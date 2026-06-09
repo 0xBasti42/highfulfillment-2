@@ -858,10 +858,19 @@
 		color: var(--color-text);
 	}
 
+	/* Matches the rounded-square bordered treatment used by Trade's
+	   asset-dropdown image and Balances' table asset images, scaled
+	   down: 3px radius on a 14px icon is the same ~20% ratio Trade
+	   uses (5px on 20px). Plain border, no background fallback —
+	   the gradient backing is only useful on the larger 24px icons
+	   in Balances where icons can fail to load and need a placeholder. */
 	.segmented-icon {
 		width: 14px;
 		height: 14px;
-		border-radius: 50%;
+		flex-shrink: 0;
+		border-radius: 3px;
+		border: 1px solid var(--color-border);
+		object-fit: cover;
 	}
 
 	/* ---- Footer (sign out) ---- */
