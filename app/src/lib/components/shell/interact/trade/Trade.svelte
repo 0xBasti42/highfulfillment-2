@@ -77,18 +77,23 @@
 
 	let mode = $state<TradeMode>('exchange');
 	let swapIconTurns = $state(0);
-	/* Initial value matches the user's stored ETH variant preference;
-	   the $effect below keeps it in sync if the user toggles the
-	   setting in AccountSidebar while Trade is mounted. Trade-off:
-	   a manual swap (via the swap arrow) is overridden the next time
-	   the setting changes. Acceptable while there's no per-trade
-	   asset selection UI; revisit with a user-override flag once the
-	   asset dropdown becomes interactive. */
-	let tokenIn = $state<Token>(settings.defaultEthVariant === 'SETH' ? SETH : ETH);
+	/* Initial value matches the user's stored default-crypto preference;
+	   the $effect below keeps it in sync if the user toggles the setting
+	   in AccountSidebar while Trade is mounted. Trade-off: a manual swap
+	   (via the swap arrow) is overridden the next time the setting
+	   changes. Acceptable while there's no per-trade asset selection UI;
+	   revisit with a user-override flag once the asset dropdown becomes
+	   interactive.
+
+	   TODO(BTC): selecting BTC currently falls through to ETH here
+	   because Trade doesn't yet have a BTC (cbBTC) token defined. Define
+	   one (image, alt, symbol pointing at /tokens/cbbtc.svg) and extend
+	   the ternary to a switch when BTC trading is enabled. */
+	let tokenIn = $state<Token>(settings.defaultCrypto === 'SETH' ? SETH : ETH);
 	let tokenOut = $state<Token>(MGABR);
 
 	$effect(() => {
-		tokenIn = settings.defaultEthVariant === 'SETH' ? SETH : ETH;
+		tokenIn = settings.defaultCrypto === 'SETH' ? SETH : ETH;
 	});
 	let sellAmount = $state('');
 	let buyAmount = $state('');

@@ -97,7 +97,7 @@
 
 	const stats = $derived<Stat[]>([
 		{ label: `Price ${currency.code}`, value: `${currency.sign} 1.6100` },
-		{ label: `Price ${settings.defaultEthVariant}`, value: '♢ 0.0805' },
+		{ label: `Price ${settings.defaultCrypto}`, value: '♢ 0.0805' },
 		{ label: 'Depth', value: `${currency.sign} 1.1m` },
 		{ label: 'Mcap', value: `${currency.sign} 16.10m` },
 		{ label: 'FDV', value: `${currency.sign} 32.20m` },

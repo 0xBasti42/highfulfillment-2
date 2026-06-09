@@ -6,11 +6,35 @@
 	import {
 		settings,
 		type Stablecoin,
-		type EthVariant
+		type DefaultCrypto
 	} from '$lib/state/settings.svelte';
 	import { currencyOf } from '$lib/utils/currency';
 	import { truncateAddress } from '$lib/utils/address';
 	import { scrollLock } from '$lib/utils/scrollLock';
+	import {
+		wallet,
+		SUPPORTED_ASSETS,
+		ASSET_DECIMALS,
+		type SupportedAsset
+	} from '$lib/state/wallet.svelte';
+
+	/* Non-default assets the user holds a non-zero balance of. Rendered
+	   as additional balance rows beneath the default crypto + stablecoin,
+	   separated by a divider. Today all balances are stubbed at zero so
+	   this list is always empty; once the RPC sync wires up
+	   `wallet.setBalance(...)`, rows appear here automatically. */
+	const otherAssets = $derived(
+		SUPPORTED_ASSETS.filter(
+			(asset) =>
+				asset !== settings.defaultCrypto &&
+				asset !== settings.defaultStablecoin &&
+				wallet.balanceOf(asset) > 0
+		)
+	);
+
+	function formatBalance(asset: SupportedAsset): string {
+		return wallet.balanceOf(asset).toFixed(ASSET_DECIMALS[asset]);
+	}
 
 	/* `$derived` so the balance card's currency sign re-renders the
 	   moment the user toggles their default stablecoin below. */
@@ -25,7 +49,8 @@
 		{ value: 'EURC', label: 'EURC', icon: '/tokens/eurc.svg' }
 	];
 
-	const ETH_VARIANT_OPTIONS: { value: EthVariant; label: string; icon: string }[] = [
+	const CRYPTO_OPTIONS: { value: DefaultCrypto; label: string; icon: string }[] = [
+		{ value: 'BTC', label: 'BTC', icon: '/tokens/cbbtc.svg' },
 		{ value: 'ETH', label: 'ETH', icon: '/tokens/eth.svg' },
 		{ value: 'SETH', label: 'SETH', icon: '/tokens/seth-dec-3.svg' }
 	];
@@ -141,7 +166,7 @@
 					<div class="balance-divider" aria-hidden="true"></div>
 					<ul class="balance-list">
 						<li class="balance-row">
-							<span class="balance-asset">{settings.defaultEthVariant}</span>
+							<span class="balance-asset">{settings.defaultCrypto}</span>
 							<span class="balance-figure numeric-mono">0.0000</span>
 						</li>
 						<li class="balance-row">
@@ -149,6 +174,29 @@
 							<span class="balance-figure numeric-mono">0.00</span>
 						</li>
 					</ul>
+					<!-- Conditional per-asset rows for any non-default holdings the
+					     user has a non-zero balance of. Block only renders when
+					     `otherAssets` is non-empty so the card doesn't show an
+					     orphan divider when there's nothing beneath the defaults.
+
+					     Separator is a `border-top` on the <ul> rather than a
+					     standalone `<div class="balance-divider">` so the line
+					     stays anchored to an integer pixel position. A
+					     standalone 1px div can render across 2 device pixels
+					     (wider + lighter) when accumulated layout heights above
+					     it land on a fractional Y — borders avoid that. -->
+					{#if otherAssets.length > 0}
+						<ul class="balance-list balance-list--separated">
+							{#each otherAssets as asset (asset)}
+								<li class="balance-row">
+									<span class="balance-asset">{asset}</span>
+									<span class="balance-figure numeric-mono">
+										{formatBalance(asset)}
+									</span>
+								</li>
+							{/each}
+						</ul>
+					{/if}
 				</div>
 				<div class="balance-actions">
 					<button
@@ -237,26 +285,26 @@
 					>
 						<div class="setting-row">
 							<div class="setting-label-line">
-								<span class="label-eyebrow setting-label">Default ETH</span>
+								<span class="label-eyebrow setting-label">Default crypto</span>
 								<button
 									type="button"
 									class="info-tip"
 									aria-label="About SETH"
-									aria-describedby="default-eth-tip"
+									aria-describedby="default-crypto-tip"
 								>
 									<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
 								</button>
 							</div>
-							<div class="segmented" role="radiogroup" aria-label="Default ETH">
-								{#each ETH_VARIANT_OPTIONS as option (option.value)}
-									{@const active = settings.defaultEthVariant === option.value}
+							<div class="segmented" role="radiogroup" aria-label="Default crypto">
+								{#each CRYPTO_OPTIONS as option (option.value)}
+									{@const active = settings.defaultCrypto === option.value}
 									<button
 										type="button"
 										class="segmented-option"
 										class:segmented-option--active={active}
 										role="radio"
 										aria-checked={active}
-										onclick={() => settings.setDefaultEthVariant(option.value)}
+										onclick={() => settings.setDefaultCrypto(option.value)}
 									>
 										<img src={option.icon} alt="" class="segmented-icon" />
 										<span>{option.label}</span>
@@ -266,8 +314,11 @@
 							<!-- Absolutely positioned; sits visually above the row when
 							     the info button is hovered or keyboard-focused. Revealed
 							     via the `:has()` rule in the style block below — no
-							     JS state needed for a pure hover affordance. -->
-							<div id="default-eth-tip" role="tooltip" class="setting-tooltip">
+							     JS state needed for a pure hover affordance.
+							     Tooltip stays focused on SETH — BTC and ETH are
+							     already familiar to most users; SETH is the
+							     protocol-specific option that needs explaining. -->
+							<div id="default-crypto-tip" role="tooltip" class="setting-tooltip">
 								SETH is ETH/100, and it turns TVL into an additional source of revenue for
 								verified applications across the EVM.
 							</div>
@@ -532,6 +583,16 @@
 		justify-content: space-between;
 		gap: 12px;
 		font-size: 12px;
+	}
+
+	/* `border-top` substitutes for a standalone .balance-divider when
+	   the divider would otherwise land on a fractional pixel position
+	   (see comment on the markup). 12px padding-top mirrors the
+	   parent's `gap: 12px` so the spacing pre/post-line matches the
+	   standalone-divider case used between the headline and the list. */
+	.balance-list--separated {
+		border-top: 1px solid var(--color-border);
+		padding-top: 12px;
 	}
 
 	.balance-asset {

@@ -15,10 +15,14 @@
 import { browser } from '$app/environment';
 
 export type Stablecoin = 'USDC' | 'TGBP' | 'EURC';
-export type EthVariant = 'ETH' | 'SETH';
+export type DefaultCrypto = 'BTC' | 'ETH' | 'SETH';
 
 const STORAGE_KEY_STABLECOIN = 'hp:defaultStablecoin';
-const STORAGE_KEY_ETH_VARIANT = 'hp:defaultEthVariant';
+const STORAGE_KEY_CRYPTO = 'hp:defaultCrypto';
+/* Legacy key used before the type was broadened from `EthVariant` →
+   `DefaultCrypto`. Read once on load so existing dev/test users keep
+   their preference, then deleted. */
+const STORAGE_KEY_CRYPTO_LEGACY = 'hp:defaultEthVariant';
 
 /* Default tilted to TGBP rather than USDC: EPL is GBP-denominated at
    source, and the asset-class identity of the platform leans into that.
@@ -26,16 +30,17 @@ const STORAGE_KEY_ETH_VARIANT = 'hp:defaultEthVariant';
    open if they prefer. */
 const DEFAULT_STABLECOIN: Stablecoin = 'TGBP';
 /* Default to plain ETH because most users land here knowing what ETH
-   is; SETH is the protocol-internal stability wrapper and is opt-in
-   once the user understands its role. */
-const DEFAULT_ETH_VARIANT: EthVariant = 'ETH';
+   is; SETH is the protocol-internal stability wrapper and BTC requires
+   bridging in (we surface Coinbase Wrapped BTC), so both are opt-in
+   once the user understands them. */
+const DEFAULT_CRYPTO: DefaultCrypto = 'ETH';
 
 function isStablecoin(value: unknown): value is Stablecoin {
 	return value === 'USDC' || value === 'TGBP' || value === 'EURC';
 }
 
-function isEthVariant(value: unknown): value is EthVariant {
-	return value === 'ETH' || value === 'SETH';
+function isCrypto(value: unknown): value is DefaultCrypto {
+	return value === 'BTC' || value === 'ETH' || value === 'SETH';
 }
 
 /* Defensive read: localStorage values are user-tamperable strings, so
@@ -52,19 +57,28 @@ function loadStablecoin(): Stablecoin {
 	return DEFAULT_STABLECOIN;
 }
 
-function loadEthVariant(): EthVariant {
-	if (!browser) return DEFAULT_ETH_VARIANT;
+function loadCrypto(): DefaultCrypto {
+	if (!browser) return DEFAULT_CRYPTO;
 	try {
-		const stored = localStorage.getItem(STORAGE_KEY_ETH_VARIANT);
-		if (isEthVariant(stored)) return stored;
+		const stored = localStorage.getItem(STORAGE_KEY_CRYPTO);
+		if (isCrypto(stored)) return stored;
+		/* Transparent migration from the previous key. If the legacy
+		   value validates against the (now-broader) crypto union, move
+		   it to the new key and clean up the old one. */
+		const legacy = localStorage.getItem(STORAGE_KEY_CRYPTO_LEGACY);
+		if (isCrypto(legacy)) {
+			localStorage.setItem(STORAGE_KEY_CRYPTO, legacy);
+			localStorage.removeItem(STORAGE_KEY_CRYPTO_LEGACY);
+			return legacy;
+		}
 	} catch {
 		/* see loadStablecoin */
 	}
-	return DEFAULT_ETH_VARIANT;
+	return DEFAULT_CRYPTO;
 }
 
 let _defaultStablecoin = $state<Stablecoin>(loadStablecoin());
-let _defaultEthVariant = $state<EthVariant>(loadEthVariant());
+let _defaultCrypto = $state<DefaultCrypto>(loadCrypto());
 
 export const settings = {
 	get defaultStablecoin() {
@@ -80,14 +94,14 @@ export const settings = {
 			   the in-memory state still updates for this session. */
 		}
 	},
-	get defaultEthVariant() {
-		return _defaultEthVariant;
+	get defaultCrypto() {
+		return _defaultCrypto;
 	},
-	setDefaultEthVariant(value: EthVariant) {
-		_defaultEthVariant = value;
+	setDefaultCrypto(value: DefaultCrypto) {
+		_defaultCrypto = value;
 		if (!browser) return;
 		try {
-			localStorage.setItem(STORAGE_KEY_ETH_VARIANT, value);
+			localStorage.setItem(STORAGE_KEY_CRYPTO, value);
 		} catch {
 			/* see setDefaultStablecoin */
 		}
