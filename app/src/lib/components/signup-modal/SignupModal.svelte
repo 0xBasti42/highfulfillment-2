@@ -2,7 +2,9 @@
 	import { onDestroy, tick } from 'svelte';
 	import { signup } from '$lib/state/signup.svelte';
 	import { auth } from '$lib/state/auth.svelte';
+	import { account } from '$lib/state/account.svelte';
 	import { truncateAddress } from '$lib/utils/address';
+	import { scrollLock } from '$lib/utils/scrollLock';
 
 	type Stage = 'email' | 'otp' | 'success';
 
@@ -26,6 +28,12 @@
 	let error = $state<string | null>(null);
 	let eoaAddress = $state('');
 	let smartWalletAddress = $state('');
+	/* Set from the /init response — drives whether the account sidebar
+	   auto-opens after the user hits "Enter app". Defaults to `true` in
+	   the mocked flow because we can't actually distinguish; the real
+	   value comes from Turnkey via getSubOrgIds (no existing sub-org
+	   for the email = new user). */
+	let isNewUser = $state(true);
 	/* Seconds remaining before the user can hit Resend again. 0 means
 	   "available". Reactive so the button label can re-render every tick. */
 	let resendCooldown = $state(0);
@@ -36,7 +44,10 @@
 	/* Sync the external `signup` store with the imperative <dialog> API.
 	   showModal() / close() must be called as methods; we guard against
 	   redundant calls so esc-to-close (which fires `close` -> store.close
-	   -> this effect) doesn't re-enter showModal on an already-open dialog. */
+	   -> this effect) doesn't re-enter showModal on an already-open dialog.
+
+	   Scroll lock is acquired while the modal is open and released when
+	   it closes (or when the component unmounts) via the cleanup return. */
 	$effect(() => {
 		const el = dialogEl;
 		if (!el) return;
@@ -45,6 +56,8 @@
 				reset();
 				el.showModal();
 			}
+			scrollLock.acquire();
+			return () => scrollLock.release();
 		} else if (el.open) {
 			el.close();
 		}
@@ -58,7 +71,17 @@
 		error = null;
 		eoaAddress = '';
 		smartWalletAddress = '';
+		isNewUser = true;
 		stopResendCooldown();
+	}
+
+	/* Closes the modal and — only for first-time signups — opens the
+	   account sidebar so new users land on the surface where their
+	   wallet details, balance, and settings live. Returning users go
+	   straight back to whatever they were doing. */
+	function enterApp() {
+		close();
+		if (isNewUser) account.open();
 	}
 
 	function startResendCooldown() {
@@ -153,9 +176,8 @@
 			if (otpString !== '000000') throw new Error('Incorrect code, try again');
 			eoaAddress = '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e';
 			smartWalletAddress = '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
-			/* Sign the user in as soon as verification succeeds — the success
-			   stage below is just confirmation; closing the modal without
-			   clicking "Enter app" leaves them signed in. */
+			/* TODO(turnkey): set `isNewUser` from /init response. In the
+			   mocked flow it stays at its initialised value (true). */
 			auth.signIn({
 				email,
 				ownerEoa: eoaAddress as `0x${string}`,
@@ -352,7 +374,7 @@
 					<code class="addr">{truncateAddress(smartWalletAddress)}</code>
 				</div>
 			</div>
-			<button type="button" class="primary" onclick={close}>Enter app</button>
+			<button type="button" class="primary" onclick={enterApp}>Enter app</button>
 		{/if}
 	</div>
 </dialog>
@@ -616,6 +638,10 @@
 		opacity: 0.3;
 	}
 
+	/* Success-stage card. Holds the EOA + smart wallet addresses in a
+	   surface-on-elevated treatment so it reads as a distinct "here are
+	   your new credentials" block rather than a continuation of the
+	   form. Non-interactive — no hover state. */
 	.walletCard {
 		display: flex;
 		flex-direction: column;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Component } from 'svelte';
 	import Balances from './balances/Balances.svelte';
 	import Positions from './positions/Positions.svelte';
 	import Orders from './orders/Orders.svelte';
@@ -6,6 +7,17 @@
 
 	const tabs = ['Balances', 'Positions', 'Orders', 'History'] as const;
 	type Tab = (typeof tabs)[number];
+
+	/* Map-based component swap: `<Component />` of a `$state`-derived
+	   variable is the canonical Svelte 5 pattern for "render exactly
+	   one of N", and is more deterministic than an {#if/elif} chain
+	   when the previous component holds any per-mount state. */
+	const TAB_COMPONENTS: Record<Tab, Component> = {
+		Balances,
+		Positions,
+		Orders,
+		History
+	};
 
 	let activeTab = $state<Tab>('Balances');
 </script>
@@ -22,22 +34,16 @@
 			>
 				{tab}
 			</button>
-			<div class="divider" aria-hidden="true"></div>
 		{/each}
 		<!-- Extends the bottom border-line to the right of the last tab. -->
 		<div class="position-view-header-spacer" aria-hidden="true"></div>
 	</div>
 
 	<div class="position-view-body">
-		{#if activeTab === 'Balances'}
-			<Balances />
-		{:else if activeTab === 'Positions'}
-			<Positions />
-		{:else if activeTab === 'Orders'}
-			<Orders />
-		{:else if activeTab === 'History'}
-			<History />
-		{/if}
+		{#key activeTab}
+			{@const Component = TAB_COMPONENTS[activeTab]}
+			<Component />
+		{/key}
 	</div>
 </div>
 
@@ -87,6 +93,21 @@
 			color var(--transition-base);
 	}
 
+	/* Reserve a transparent 1px border-left on every tab except the
+	   first. Painting/unpainting via the active-state rules below
+	   only changes colour, never layout — no 1px geometry shift when
+	   activating a tab. */
+	.menu-button + .menu-button {
+		border-left: 1px solid transparent;
+	}
+
+	/* Same reservation logic for the last tab's right edge — History
+	   needs a right border when active to close the active surface on
+	   the side that has no following sibling. */
+	.menu-button:last-of-type {
+		border-right: 1px solid transparent;
+	}
+
 	.menu-button:not(.active):hover {
 		background-color: #20202090;
 		color: var(--color-text);
@@ -98,24 +119,18 @@
 		color: var(--color-text);
 	}
 
-	/* Vertical separator placed after each tab. Painted only when adjacent
-	   to the active tab so the active tab is visually closed on both sides
-	   without relying on conditionally-coloured borders. The permanent
-	   `border-bottom` keeps the horizontal line continuous across the
-	   divider's column even when its body is transparent. */
-	.divider {
-		flex-shrink: 0;
-		box-sizing: border-box;
-		width: 1px;
-		height: 100%;
-		background-color: transparent;
-		border-bottom: 1px solid var(--color-border);
-		transition: background-color var(--transition-base);
+	/* Borders only paint around the active tab, leaving unselected
+	   tabs cleanly unbordered:
+	   - the tab immediately AFTER the active one (its right boundary)
+	   - the active tab itself, if not first (its left boundary)
+	   - last tab (History) when active gets its border-right too */
+	.menu-button.active + .menu-button,
+	.menu-button:not(:first-of-type).active {
+		border-left-color: var(--color-border);
 	}
 
-	.menu-button.active + .divider,
-	.divider:has(+ .menu-button.active) {
-		background-color: var(--color-border);
+	.menu-button:last-of-type.active {
+		border-right-color: var(--color-border);
 	}
 
 	.position-view-header-spacer {

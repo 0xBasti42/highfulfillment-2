@@ -2,6 +2,8 @@
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
+	import { settings } from '$lib/state/settings.svelte';
+	import { currencyOf } from '$lib/utils/currency';
 
 	type Stat = { label: string; value: string; positive?: boolean; negative?: boolean };
 
@@ -87,19 +89,25 @@
 		}
 	}
 
-	const stats: Stat[] = [
-		{ label: 'Price GBP', value: '£ 1.6100' },
-		{ label: 'Price sETH', value: '♢ 0.0805' },
-		{ label: 'Depth', value: '£ 1.1m' },
-		{ label: 'Mcap', value: '£ 16.10m' },
-		{ label: 'FDV', value: '£ 32.20m' },
+	/* `$derived` so toggling the default stablecoin in the account
+	   sidebar instantly re-renders the labels + signs everywhere this
+	   component mounts. The SETH / PBR / Funding rows stay constant —
+	   they're denominated in protocol-native units, not fiat. */
+	const currency = $derived(currencyOf(settings.defaultStablecoin));
+
+	const stats = $derived<Stat[]>([
+		{ label: `Price ${currency.code}`, value: `${currency.sign} 1.6100` },
+		{ label: `Price ${settings.defaultEthVariant}`, value: '♢ 0.0805' },
+		{ label: 'Depth', value: `${currency.sign} 1.1m` },
+		{ label: 'Mcap', value: `${currency.sign} 16.10m` },
+		{ label: 'FDV', value: `${currency.sign} 32.20m` },
 		{ label: '24h change', value: '+0.1502 / +10.28%', positive: true },
-		{ label: '24h volume', value: '£ 33,894,612' },
-		{ label: 'Staked', value: '£ 3,954,354' },
+		{ label: '24h volume', value: `${currency.sign} 33,894,612` },
+		{ label: 'Staked', value: `${currency.sign} 3,954,354` },
 		{ label: 'PPM', value: '87.36' },
 		{ label: 'PBR', value: '♢ 0.4261' },
 		{ label: 'Funding', value: '0.0100 (00:06:56)' }
-	];
+	]);
 </script>
 
 <div class="token-info">

@@ -37,8 +37,8 @@
 		},
 		{
 			image: '/tokens/seth-dec-3.svg',
-			alt: 'sETH',
-			symbol: 'sETH',
+			alt: 'SETH',
+			symbol: 'SETH',
 			name: 'Stability ETH',
 			assetClass: 'base',
 			total: 0.812,
@@ -59,8 +59,8 @@
 		},
 		{
 			image: '/tokens/tgbp-blue.svg',
-			alt: 'tGBP',
-			symbol: 'tGBP',
+			alt: 'TGBP',
+			symbol: 'TGBP',
 			name: 'Tokenised GBP',
 			assetClass: 'base',
 			total: 1240.0,

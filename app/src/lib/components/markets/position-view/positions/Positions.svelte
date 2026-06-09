@@ -24,7 +24,7 @@
 
 	// Wireframe-only seed data. Replace with the user's open spot holdings + cost
 	// basis once the indexer (positions table) and on-chain balances are wired.
-	// Base assets (ETH/USDC/tGBP/sETH) intentionally excluded — those belong in
+	// Base assets (ETH/USDC/TGBP/SETH) intentionally excluded — those belong in
 	// Balances, since they don't carry a PBR yield stream or a meaningful entry
 	// price relative to GBP.
 	const rows: PositionRow[] = [
@@ -419,17 +419,24 @@
 		align-items: stretch;
 	}
 
+	/* Column min-widths brought down so the 8-column grid fits the
+	   MainColumn's content area at typical desktop widths (≥ ~1440px
+	   viewport). Total minimum sums to ~870px, matching Balances' 920px
+	   density. Numeric cells truncate with the existing
+	   `overflow: hidden; text-overflow: ellipsis` on `.cell` if they
+	   ever exceed; the Actions column keeps `auto` since its buttons
+	   can't ellipsis-truncate. */
 	.positions-row {
 		display: grid;
 		grid-template-columns:
-			minmax(180px, 2fr)
+			minmax(130px, 2fr)
+			minmax(50px, 1fr)
+			minmax(70px, 1fr)
+			minmax(70px, 1fr)
+			minmax(95px, 1.2fr)
+			minmax(70px, 1fr)
 			minmax(90px, 1fr)
-			minmax(110px, 1fr)
-			minmax(110px, 1fr)
-			minmax(140px, 1.2fr)
-			minmax(120px, 1fr)
-			minmax(130px, 1fr)
-			minmax(140px, auto);
+			minmax(115px, auto);
 		align-items: center;
 		gap: 20px;
 		padding: 0 20px;

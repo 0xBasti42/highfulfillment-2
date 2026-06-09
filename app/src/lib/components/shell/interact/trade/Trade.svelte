@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { signup } from '$lib/state/signup.svelte';
 	import { auth } from '$lib/state/auth.svelte';
+	import { settings } from '$lib/state/settings.svelte';
 
 	// type TradeMode = 'exchange' | 'advanced' | 'stake';
 	type TradeMode = 'exchange';
@@ -40,8 +41,8 @@
 
 	const SETH: Token = {
 		image: '/tokens/seth-dec-3.svg',
-		alt: 'sETH',
-		symbol: 'sETH'
+		alt: 'SETH',
+		symbol: 'SETH'
 	};
 
 	const ETH: Token = {
@@ -52,8 +53,8 @@
 
 	const TGBP: Token = {
 		image: '/tokens/tgbp-blue.svg',
-		alt: 'tGBP',
-		symbol: 'tGBP'
+		alt: 'TGBP',
+		symbol: 'TGBP'
 	};
 
 	const DAI: Token = {
@@ -76,8 +77,19 @@
 
 	let mode = $state<TradeMode>('exchange');
 	let swapIconTurns = $state(0);
-	let tokenIn = $state<Token>(ETH);
+	/* Initial value matches the user's stored ETH variant preference;
+	   the $effect below keeps it in sync if the user toggles the
+	   setting in AccountSidebar while Trade is mounted. Trade-off:
+	   a manual swap (via the swap arrow) is overridden the next time
+	   the setting changes. Acceptable while there's no per-trade
+	   asset selection UI; revisit with a user-override flag once the
+	   asset dropdown becomes interactive. */
+	let tokenIn = $state<Token>(settings.defaultEthVariant === 'SETH' ? SETH : ETH);
 	let tokenOut = $state<Token>(MGABR);
+
+	$effect(() => {
+		tokenIn = settings.defaultEthVariant === 'SETH' ? SETH : ETH;
+	});
 	let sellAmount = $state('');
 	let buyAmount = $state('');
 	// Placeholder rate expressed as units of tokenIn per 1 tokenOut.
@@ -213,7 +225,6 @@
 			>
 				<p class="trade-header-label">Exchange</p>
 			</button>
-			<div class="divider" aria-hidden="true"></div>
 			<!-- <button
 				type="button"
 				class="trade-header-left-item"
@@ -223,7 +234,6 @@
 			>
 				<p class="trade-header-label">Advanced</p>
 			</button> -->
-			<!-- <div class="divider" aria-hidden="true"></div> -->
 		</div>
 		<div class="trade-header-right">
 			<div class="trade-header-right-item">
@@ -321,6 +331,15 @@
 			color var(--transition-base);
 	}
 
+	/* Mirrors the PositionView tab-header treatment: borders live on
+	   the buttons themselves (not a separate divider element), and only
+	   paint around the active tab. Transparent placeholders reserve the
+	   1px geometry slot so activating a tab is a colour change only —
+	   no layout shift. */
+	.trade-header-left-item:last-of-type {
+		border-right: 1px solid transparent;
+	}
+
 	.trade-header-left-item.active {
 		border-bottom-color: transparent;
 		background-color: var(--color-surface-elevated);
@@ -339,23 +358,28 @@
 		color: var(--color-text);
 	}
 
-	/* Vertical separator placed after each tab. Painted only when adjacent
-	   to the active tab. The permanent `border-bottom` keeps the horizontal
-	   line continuous across the divider's column even when its body is
-	   transparent. */
-	.divider {
-		flex-shrink: 0;
-		box-sizing: border-box;
-		width: 1px;
-		height: 100%;
-		background-color: transparent;
-		border-bottom: 1px solid var(--color-border);
-		transition: background-color var(--transition-base);
+	/* Last tab's right border paints when itself active — closes the
+	   active tab on the side that has no following sibling. */
+	.trade-header-left-item:last-of-type.active {
+		border-right-color: var(--color-border);
 	}
 
-	.trade-header-left-item.active + .divider {
-		background-color: var(--color-border);
-	}
+	/* The sibling-based selectors below are commented out because
+	   Exchange is currently the only visible tab — there's no second
+	   `.trade-header-left-item` for them to match (Svelte would prune
+	   them and emit `css_unused_selector` warnings). When the Advanced
+	   button above is uncommented (or any second tab is added),
+	   uncomment this block too so the active-tab boundary rules apply.
+
+	   .trade-header-left-item + .trade-header-left-item {
+	     border-left: 1px solid transparent;
+	   }
+
+	   .trade-header-left-item.active + .trade-header-left-item,
+	   .trade-header-left-item:not(:first-of-type).active {
+	     border-left-color: var(--color-border);
+	   }
+	*/
 
 	.trade-header-right {
 		flex: 1;

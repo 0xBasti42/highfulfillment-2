@@ -3,6 +3,16 @@
 	import { cubicOut } from 'svelte/easing';
 	import { page } from '$app/state';
 	import { sidebar } from '$lib/state/sidebar.svelte';
+	import { scrollLock } from '$lib/utils/scrollLock';
+
+	/* Acquire body scroll lock while the sidebar is open; release via
+	   the cleanup return when it closes or the component unmounts. */
+	$effect(() => {
+		if (sidebar.isOpen) {
+			scrollLock.acquire();
+			return () => scrollLock.release();
+		}
+	});
 
 	type Item = { label: string; href: string };
 	type Section = { title: string; items: Item[] };
