@@ -6,7 +6,9 @@ import { LibClone } from "@solady/utils/LibClone.sol";
 import { AddressBook } from "@core/AddressBook.sol";
 
 import { HPSmartWallet } from "./HPSmartWallet.sol";
+import { MultiOwnable } from "./base/MultiOwnable.sol";
 import { IHPWalletFactory } from "./interfaces/IHPWalletFactory.sol";
+import { OwnerValidation } from "./libraries/OwnerValidation.sol";
 
 /// @title HPSmartWalletFactory
 /// @notice CREATE2 ERC-1967 proxy factory for `HPSmartWallet` (Coinbase-style account factory). It is also the
@@ -45,9 +47,7 @@ contract HPSmartWalletFactory is AddressBook, IHPWalletFactory {
         virtual
         returns (HPSmartWallet account)
     {
-        if (owners.length == 0) {
-            revert OwnerRequired();
-        }
+        _validateOwners(owners);
 
         (bool alreadyDeployed, address accountAddress) =
             LibClone.createDeterministicERC1967(msg.value, implementation, _getSalt(owners, nonce));
@@ -63,7 +63,10 @@ contract HPSmartWalletFactory is AddressBook, IHPWalletFactory {
     }
 
     /// @notice Counterfactual wallet address for `owners` + `nonce` (used by the client and Turnkey config).
+    /// @dev Validates `owners` with the same rules as deployment, so a predicted address is always deployable
+    ///      (no advertising of addresses that `createAccount` would reject, which could trap pre-funded ETH).
     function getAddress(bytes[] calldata owners, uint256 nonce) external view returns (address) {
+        _validateOwners(owners);
         return LibClone.predictDeterministicAddress(initCodeHash(), _getSalt(owners, nonce), address(this));
     }
 
@@ -103,6 +106,23 @@ contract HPSmartWalletFactory is AddressBook, IHPWalletFactory {
         wallets = new address[](len);
         for (uint256 i; i < len; ++i) {
             wallets[i] = _wallets[offset + i];
+        }
+    }
+
+    /// @dev Mirrors deployment-time owner validation: non-empty, each owner controllable, no duplicates. Keeps
+    ///      counterfactual prediction and deployment in lockstep so funds are never sent to an undeployable
+    ///      address. Note `OwnerValidation` cannot reject the (unknowable here) future wallet's own address as an
+    ///      owner; that self-owner case is caught at deployment by `MultiOwnable._addOwnerAtIndex`.
+    function _validateOwners(bytes[] calldata owners) internal pure {
+        if (owners.length == 0) revert OwnerRequired();
+
+        for (uint256 i; i < owners.length; ++i) {
+            OwnerValidation.validate(owners[i]);
+
+            bytes32 ownerHash = keccak256(owners[i]);
+            for (uint256 j; j < i; ++j) {
+                if (ownerHash == keccak256(owners[j])) revert MultiOwnable.AlreadyOwner(owners[i]);
+            }
         }
     }
 

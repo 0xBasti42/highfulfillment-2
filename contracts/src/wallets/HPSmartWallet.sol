@@ -96,9 +96,9 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
     }
 
     constructor(address addressProvider_) AddressBook(addressProvider_) {
-        bytes[] memory owners = new bytes[](1);
-        owners[0] = abi.encode(address(0));
-        _initializeOwners(owners);
+        // Lock this implementation against direct initialization. Done without storing an `address(0)` sentinel
+        // owner, which would now be rejected as uncontrollable; proxies retain fresh storage and initialize.
+        _lockImplementation();
     }
 
     function initialize(bytes[] calldata owners) external payable virtual {

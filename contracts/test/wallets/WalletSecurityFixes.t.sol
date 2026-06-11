@@ -2,7 +2,9 @@
 pragma solidity ^0.8.34;
 
 import { HPSmartWallet } from "@src/wallets/HPSmartWallet.sol";
+import { HPSmartWalletFactory } from "@src/wallets/HPSmartWalletFactory.sol";
 import { MultiOwnable } from "@src/wallets/base/MultiOwnable.sol";
+import { OwnerValidation } from "@src/wallets/libraries/OwnerValidation.sol";
 
 import { WalletTestBase } from "./WalletTestBase.sol";
 
@@ -130,5 +132,93 @@ contract WalletSecurityFixesTest is WalletTestBase {
         HPSmartWallet wallet = _createWallet(ownerEOA, 0);
         vm.expectRevert(MultiOwnable.Unauthorized.selector);
         wallet.isValidSignatureExternal(keccak256("x"), "");
+    }
+
+    // --------------------------------------------
+    //  #85733: uncontrollable owners are rejected at the chokepoint
+    // --------------------------------------------
+
+    function test_cannotAddZeroAddressOwner() public {
+        HPSmartWallet wallet = _createWallet(ownerEOA, 0);
+
+        vm.prank(ownerEOA);
+        vm.expectRevert(
+            abi.encodeWithSelector(OwnerValidation.InvalidEthereumAddressOwner.selector, abi.encode(address(0)))
+        );
+        wallet.addOwnerAddress(address(0));
+
+        // The original brick sequence can no longer strand the wallet: the inert add reverts, so the real
+        // owner is never left as the sole, uncontrollable entry.
+        assertEq(wallet.ownerCount(), 1);
+        assertTrue(wallet.isOwnerAddress(ownerEOA));
+    }
+
+    function test_cannotAddSelfAsOwner() public {
+        HPSmartWallet wallet = _createWallet(ownerEOA, 0);
+
+        vm.prank(ownerEOA);
+        vm.expectRevert(MultiOwnable.SelfOwnerNotAllowed.selector);
+        wallet.addOwnerAddress(address(wallet));
+    }
+
+    function test_cannotAddOffCurvePublicKey() public {
+        HPSmartWallet wallet = _createWallet(ownerEOA, 0);
+        bytes32 x = bytes32(uint256(1));
+        bytes32 y = bytes32(uint256(1)); // (1, 1) is not on the secp256r1 curve
+
+        vm.prank(ownerEOA);
+        vm.expectRevert(
+            abi.encodeWithSelector(OwnerValidation.InvalidPublicKeyOwner.selector, abi.encode(x, y))
+        );
+        wallet.addOwnerPublicKey(x, y);
+    }
+
+    function test_createAccountRejectsZeroAddressOwner() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(OwnerValidation.InvalidEthereumAddressOwner.selector, abi.encode(address(0)))
+        );
+        factory.createAccount(_singleOwner(address(0)), 0);
+    }
+
+    function test_implementationCannotBeInitialized() public {
+        vm.expectRevert(HPSmartWallet.Initialized.selector);
+        walletImplementation.initialize(_singleOwner(ownerEOA));
+    }
+
+    // --------------------------------------------
+    //  #85729: getAddress never predicts an undeployable address
+    // --------------------------------------------
+
+    function test_getAddress_revertsForEmptyOwners() public {
+        bytes[] memory owners = new bytes[](0);
+        vm.expectRevert(HPSmartWalletFactory.OwnerRequired.selector);
+        factory.getAddress(owners, 0);
+    }
+
+    function test_getAddress_revertsForZeroAddressOwner() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(OwnerValidation.InvalidEthereumAddressOwner.selector, abi.encode(address(0)))
+        );
+        factory.getAddress(_singleOwner(address(0)), 0);
+    }
+
+    function test_getAddress_revertsForMalformedOwnerBytes() public {
+        bytes[] memory owners = new bytes[](1);
+        owners[0] = hex"010203"; // neither 32 nor 64 bytes
+        vm.expectRevert(abi.encodeWithSelector(OwnerValidation.InvalidOwnerBytesLength.selector, owners[0]));
+        factory.getAddress(owners, 0);
+    }
+
+    function test_getAddress_revertsForDuplicateOwners() public {
+        bytes[] memory owners = _twoOwners(ownerEOA, ownerEOA);
+        vm.expectRevert(abi.encodeWithSelector(MultiOwnable.AlreadyOwner.selector, abi.encode(ownerEOA)));
+        factory.getAddress(owners, 0);
+    }
+
+    /// @dev A valid prediction still matches the deployed address (consistency preserved).
+    function test_getAddress_consistentWithDeploymentForValidOwners() public {
+        bytes[] memory owners = _singleOwner(ownerEOA);
+        address predicted = factory.getAddress(owners, 0);
+        assertEq(address(factory.createAccount(owners, 0)), predicted);
     }
 }

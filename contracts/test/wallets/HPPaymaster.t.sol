@@ -299,6 +299,21 @@ contract HPPaymasterTest is WalletTestBase {
         paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, context, 1);
     }
 
+    /// @dev Audit #85730: an unbounded maxPriorityFeePerGas must not overflow/revert the settlement hook.
+    function test_postOp_doesNotRevertOnUnboundedPriorityFee() public {
+        vm.fee(1); // basefee >= 1 so a checked add would overflow
+        vm.prank(funder);
+        paymaster.depositFor{ value: 1 ether }(address(wallet));
+
+        // reserved sized off a small maxFeePerGas; maxPriorityFeePerGas pushed to the max.
+        bytes memory context =
+            abi.encode(address(wallet), uint256(0.01 ether), uint256(1 gwei), type(uint256).max);
+
+        // Must settle without reverting (unchecked wrap mirrors the EntryPoint's own gas-price math).
+        vm.prank(address(mockEntryPoint));
+        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, context, 0.001 ether);
+    }
+
     // --------------------------------------------
     //  Stake / surplus administration
     // --------------------------------------------

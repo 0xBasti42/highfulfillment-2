@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.34;
 
+import { OwnerValidation } from "../libraries/OwnerValidation.sol";
+
 /// @notice Storage layout used by this contract.
 /// @custom:storage-location erc7201:coinbase.storage.MultiOwnable
 struct MultiOwnableStorage {
@@ -12,7 +14,10 @@ struct MultiOwnableStorage {
 
 /// @title Multi Ownable
 /// @notice Multiple owners as ABI-encoded address (32 bytes) or P-256 public key (64 bytes).
-/// @dev Storage slot matches Coinbase Smart Wallet (constant name typo `MUTLI` preserved).
+/// @dev Storage slot matches Coinbase Smart Wallet (constant name typo `MUTLI` preserved). Owner payloads are
+///      validated for controllability via `OwnerValidation` at the single `_addOwnerAtIndex` chokepoint, so an
+///      inert owner (e.g. `address(0)`, an off-curve key, or this contract itself) can never be stored and the
+///      last-owner guard therefore always reflects a real, reachable controller.
 contract MultiOwnable {
     bytes32 private constant MUTLI_OWNABLE_STORAGE_LOCATION =
         0x97e2c6aad4ce5d562ebfaa00db6b9e0fb66ea5d8162ed5b243f51a2e03086f00;
@@ -23,6 +28,7 @@ contract MultiOwnable {
     error WrongOwnerAtIndex(uint256 index, bytes expectedOwner, bytes actualOwner);
     error InvalidOwnerBytesLength(bytes owner);
     error InvalidEthereumAddressOwner(bytes owner);
+    error SelfOwnerNotAllowed();
     error LastOwner();
 
     event AddOwner(uint256 indexed index, bytes owner);
@@ -85,20 +91,16 @@ contract MultiOwnable {
         MultiOwnableStorage storage $ = _getMultiOwnableStorage();
         uint256 nextOwnerIndex_ = $.nextOwnerIndex;
         for (uint256 i; i < owners.length; i++) {
-            if (owners[i].length != 32 && owners[i].length != 64) {
-                revert InvalidOwnerBytesLength(owners[i]);
-            }
-
-            if (owners[i].length == 32 && uint256(bytes32(owners[i])) > type(uint160).max) {
-                revert InvalidEthereumAddressOwner(owners[i]);
-            }
-
             _addOwnerAtIndex(owners[i], nextOwnerIndex_++);
         }
         $.nextOwnerIndex = nextOwnerIndex_;
     }
 
+    /// @dev Single chokepoint for all owner writes (initialize / addOwnerAddress / addOwnerPublicKey). Rejects
+    ///      uncontrollable owners so the stored set always equals the set of reachable controllers.
     function _addOwnerAtIndex(bytes memory owner, uint256 index) internal virtual {
+        OwnerValidation.validate(owner);
+        if (keccak256(owner) == keccak256(abi.encode(address(this)))) revert SelfOwnerNotAllowed();
         if (isOwnerBytes(owner)) revert AlreadyOwner(owner);
 
         MultiOwnableStorage storage $ = _getMultiOwnableStorage();
@@ -106,6 +108,12 @@ contract MultiOwnable {
         $.ownerAtIndex[index] = owner;
 
         emit AddOwner(index, owner);
+    }
+
+    /// @dev Locks an implementation contract against direct initialization without storing an inert sentinel
+    ///      owner. Proxies have fresh storage (`nextOwnerIndex == 0`) and initialize normally.
+    function _lockImplementation() internal {
+        _getMultiOwnableStorage().nextOwnerIndex = type(uint256).max;
     }
 
     function _removeOwnerAtIndex(uint256 index, bytes calldata owner) internal virtual {

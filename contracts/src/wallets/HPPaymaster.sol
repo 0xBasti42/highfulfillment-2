@@ -151,7 +151,14 @@ contract HPPaymaster is IPaymaster06, AddressBook {
         (address wallet, uint256 reserved, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas) =
             abi.decode(context, (address, uint256, uint256, uint256));
 
-        uint256 feePerGas = maxPriorityFeePerGas + block.basefee;
+        // Mirror the EntryPoint's own `unchecked` gas-price computation exactly: validation bounds only
+        // `maxFeePerGas`, so a wallet could pass `maxPriorityFeePerGas` near `type(uint256).max`. Checked
+        // arithmetic would overflow and revert here, breaking the "never reverts" contract; the unchecked wrap
+        // matches `min(maxFeePerGas, maxPriorityFeePerGas + basefee)` as the EntryPoint settles it.
+        uint256 feePerGas;
+        unchecked {
+            feePerGas = maxPriorityFeePerGas + block.basefee;
+        }
         if (maxFeePerGas < feePerGas) feePerGas = maxFeePerGas;
 
         uint256 charge = actualGasCost + POST_OP_GAS * feePerGas;
