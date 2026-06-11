@@ -6,15 +6,25 @@ import { LibClone } from "@solady/utils/LibClone.sol";
 import { AddressBook } from "@core/AddressBook.sol";
 
 import { HPSmartWallet } from "./HPSmartWallet.sol";
-import { IHPWalletRegistry } from "./interfaces/IHPWalletRegistry.sol";
+import { IHPWalletFactory } from "./interfaces/IHPWalletFactory.sol";
 
 /// @title HPSmartWalletFactory
-/// @notice CREATE2 ERC-1967 proxy factory for `HPSmartWallet` (Coinbase-style account factory) that records every
-///         new wallet and its initial owners in the central `HPWalletRegistry`.
-/// @dev Deployment order: wallet implementation -> registry -> factory, then register the `WALLET_REGISTRY` and
-///      `WALLET_FACTORY` AddressProvider keys (both are resolved at call time, so ordering of the keys is free).
-contract HPSmartWalletFactory is AddressBook {
+/// @notice CREATE2 ERC-1967 proxy factory for `HPSmartWallet` (Coinbase-style account factory). It is also the
+///         authoritative wallet-legitimacy oracle: every wallet it deploys is flagged in `isHPWallet`, keyed by
+///         the unforgeable CREATE2 address. The paymaster reads that flag to decide what to sponsor.
+/// @dev There is deliberately no owner -> wallet registry. Owner-to-wallet discovery is handled off-chain by
+///      Turnkey (which manages the signer and the deterministic wallet address), and enumeration/analytics are
+///      handled by indexing the `AccountCreated` event. This removes the unauthenticated, globally-exclusive
+///      owner indexing that previously allowed registry poisoning and counterfactual-address squatting.
+contract HPSmartWalletFactory is AddressBook, IHPWalletFactory {
     address public immutable implementation;
+
+    /// @notice Wallet-keyed legitimacy flag. Keyed by the CREATE2 address, so it cannot be poisoned by
+    ///         attacker-chosen owner bytes. Read by `HPPaymaster` during validation (sender-associated storage).
+    mapping(address wallet => bool) public isHPWallet;
+
+    /// @dev Deployment order. Enumeration only; prefer indexing `AccountCreated` off-chain for large sets.
+    address[] private _wallets;
 
     event AccountCreated(address indexed account, bytes[] owners, uint256 nonce);
 
@@ -26,10 +36,9 @@ contract HPSmartWalletFactory is AddressBook {
         implementation = implementation_;
     }
 
-    /// @notice Deploys (or returns) the deterministic wallet for `owners` + `nonce` and registers it centrally.
-    /// @dev Idempotent: if the wallet is already deployed, it is returned without re-initialization or
-    ///      re-registration. The salt covers only owners + nonce, so user settings cannot influence the
-    ///      counterfactual address.
+    /// @notice Deploys (or returns) the deterministic wallet for `owners` + `nonce` and flags it as an HP wallet.
+    /// @dev Idempotent: an already-deployed wallet is returned without re-initialization or re-flagging. The salt
+    ///      covers only owners + nonce, so user settings cannot influence the counterfactual address.
     function createAccount(bytes[] calldata owners, uint256 nonce)
         external
         payable
@@ -47,7 +56,8 @@ contract HPSmartWalletFactory is AddressBook {
 
         if (!alreadyDeployed) {
             account.initialize(owners);
-            IHPWalletRegistry(_getAddress(_addressKey("WALLET_REGISTRY"))).register(accountAddress, owners);
+            isHPWallet[accountAddress] = true;
+            _wallets.push(accountAddress);
             emit AccountCreated(accountAddress, owners, nonce);
         }
     }
@@ -59,6 +69,41 @@ contract HPSmartWalletFactory is AddressBook {
 
     function initCodeHash() public view virtual returns (bytes32) {
         return LibClone.initCodeHashERC1967(implementation);
+    }
+
+    // --------------------------------------------
+    //  Enumeration
+    // --------------------------------------------
+
+    function walletCount() external view returns (uint256) {
+        return _wallets.length;
+    }
+
+    function walletAt(uint256 index) external view returns (address) {
+        return _wallets[index];
+    }
+
+    /// @notice Paginated read — prefer this (or off-chain `AccountCreated` indexing) for large sets.
+    function getWallets(uint256 offset, uint256 limit) external view returns (address[] memory) {
+        return _getWalletsSlice(offset, limit);
+    }
+
+    function getAllWallets() external view returns (address[] memory) {
+        return _getWalletsSlice(0, _wallets.length);
+    }
+
+    function _getWalletsSlice(uint256 offset, uint256 limit) private view returns (address[] memory wallets) {
+        uint256 n = _wallets.length;
+        if (offset >= n || limit == 0) {
+            return new address[](0);
+        }
+        uint256 end = offset + limit;
+        if (end > n) end = n;
+        uint256 len = end - offset;
+        wallets = new address[](len);
+        for (uint256 i; i < len; ++i) {
+            wallets[i] = _wallets[offset + i];
+        }
     }
 
     function _getSalt(bytes[] calldata owners, uint256 nonce) internal pure returns (bytes32) {

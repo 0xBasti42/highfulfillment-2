@@ -24,7 +24,6 @@ contract MultiOwnable {
     error InvalidOwnerBytesLength(bytes owner);
     error InvalidEthereumAddressOwner(bytes owner);
     error LastOwner();
-    error NotLastOwner(uint256 ownersRemaining);
 
     event AddOwner(uint256 indexed index, bytes owner);
     event RemoveOwner(uint256 indexed index, bytes owner);
@@ -42,18 +41,12 @@ contract MultiOwnable {
         _addOwnerAtIndex(abi.encode(x, y), _getMultiOwnableStorage().nextOwnerIndex++);
     }
 
+    /// @notice Removes an owner. The final owner can never be removed, so the wallet always has >=1 controller.
+    /// @dev `removeLastOwner` (which the Coinbase base exposes) is intentionally omitted: allowing the owner set
+    ///      to reach zero would permanently brick `execute`, owner management, and upgrades.
     function removeOwnerAtIndex(uint256 index, bytes calldata owner) external virtual onlyOwner {
         if (ownerCount() == 1) {
             revert LastOwner();
-        }
-
-        _removeOwnerAtIndex(index, owner);
-    }
-
-    function removeLastOwner(uint256 index, bytes calldata owner) external virtual onlyOwner {
-        uint256 ownersRemaining = ownerCount();
-        if (ownersRemaining > 1) {
-            revert NotLastOwner(ownersRemaining);
         }
 
         _removeOwnerAtIndex(index, owner);

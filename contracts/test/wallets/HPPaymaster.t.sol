@@ -6,7 +6,7 @@ import { UserOperation06 } from "@account-abstraction/legacy/v06/UserOperation06
 
 import { HPPaymaster } from "@src/wallets/HPPaymaster.sol";
 import { HPSmartWallet } from "@src/wallets/HPSmartWallet.sol";
-import { HPWalletRegistry } from "@src/wallets/HPWalletRegistry.sol";
+import { HPSmartWalletFactory } from "@src/wallets/HPSmartWalletFactory.sol";
 
 import { WalletTestBase } from "./WalletTestBase.sol";
 
@@ -68,17 +68,27 @@ contract HPPaymasterTest is WalletTestBase {
 
         wallet = _createWallet(ownerEOA, 0);
         vm.deal(funder, 100 ether);
+
+        // Deterministic fee environment: basefee 0 so the userOp fee rate resolves to maxPriorityFeePerGas.
+        vm.fee(0);
     }
 
     function _sponsoredOp(address sender, uint256 maxFeePerGas) internal pure returns (UserOperation06 memory op) {
         op = _baseUserOp(sender, 0);
         op.maxFeePerGas = maxFeePerGas;
+        op.maxPriorityFeePerGas = maxFeePerGas;
         op.paymasterAndData = "";
     }
 
-    /// @dev Credit needed for `maxCost` at `maxFeePerGas`, including the postOp margin.
-    function _required(uint256 maxCost, uint256 maxFeePerGas) internal view returns (uint256) {
+    /// @dev Reservation for `maxCost` at `maxFeePerGas`, including the postOp margin.
+    function _reserved(uint256 maxCost, uint256 maxFeePerGas) internal view returns (uint256) {
         return maxCost + paymaster.POST_OP_GAS() * maxFeePerGas;
+    }
+
+    function _validate(address sender, uint256 maxFeePerGas, uint256 maxCost) internal returns (bytes memory context) {
+        UserOperation06 memory op = _sponsoredOp(sender, maxFeePerGas);
+        vm.prank(address(mockEntryPoint));
+        (context,) = paymaster.validatePaymasterUserOp(op, bytes32(0), maxCost);
     }
 
     // --------------------------------------------
@@ -90,18 +100,18 @@ contract HPPaymasterTest is WalletTestBase {
         new HPPaymaster(address(provider), address(0));
     }
 
-    function test_constructor_cachesRegistry() public view {
-        assertEq(address(paymaster.registry()), address(registry));
+    function test_constructor_cachesFactory() public view {
+        assertEq(address(paymaster.walletFactory()), address(factory));
     }
 
-    function test_syncRegistry_followsAddressProvider() public {
-        HPWalletRegistry newRegistry = new HPWalletRegistry(address(provider));
+    function test_syncFactory_followsAddressProvider() public {
+        HPSmartWalletFactory newFactory = new HPSmartWalletFactory(address(walletImplementation), address(provider));
         vm.prank(admin);
-        provider.setName("WALLET_REGISTRY", address(newRegistry));
+        provider.setName("WALLET_FACTORY", address(newFactory));
 
-        paymaster.syncRegistry();
+        paymaster.syncFactory();
 
-        assertEq(address(paymaster.registry()), address(newRegistry));
+        assertEq(address(paymaster.walletFactory()), address(newFactory));
     }
 
     // --------------------------------------------
@@ -121,7 +131,6 @@ contract HPPaymasterTest is WalletTestBase {
     }
 
     function test_depositFor_worksForCounterfactualWallet() public {
-        // Credits can be funded before the wallet is deployed (address from factory.getAddress).
         address counterfactual = factory.getAddress(_singleOwner(makeAddr("futureUser")), 0);
 
         vm.prank(funder);
@@ -141,20 +150,28 @@ contract HPPaymasterTest is WalletTestBase {
     }
 
     // --------------------------------------------
-    //  validatePaymasterUserOp
+    //  validatePaymasterUserOp (reserves credit)
     // --------------------------------------------
 
-    function test_validate_acceptsFundedRegisteredWallet() public {
+    function test_validate_acceptsAndReservesForFundedWallet() public {
         vm.prank(funder);
         paymaster.depositFor{ value: 1 ether }(address(wallet));
 
-        UserOperation06 memory op = _sponsoredOp(address(wallet), 1 gwei);
+        uint256 maxCost = 0.01 ether;
+        uint256 reserved = _reserved(maxCost, 1 gwei);
 
+        UserOperation06 memory op = _sponsoredOp(address(wallet), 1 gwei);
         vm.prank(address(mockEntryPoint));
-        (bytes memory context, uint256 validationData) = paymaster.validatePaymasterUserOp(op, bytes32(0), 0.01 ether);
+        (bytes memory context, uint256 validationData) = paymaster.validatePaymasterUserOp(op, bytes32(0), maxCost);
 
         assertEq(validationData, 0);
-        assertEq(abi.decode(context, (address)), address(wallet));
+        (address s, uint256 r,,) = abi.decode(context, (address, uint256, uint256, uint256));
+        assertEq(s, address(wallet));
+        assertEq(r, reserved);
+
+        // Credit is debited at validation time (the reservation).
+        assertEq(paymaster.gasCredit(address(wallet)), 1 ether - reserved);
+        assertEq(paymaster.totalGasCredit(), 1 ether - reserved);
     }
 
     function test_validate_revertsWhenNotEntryPoint() public {
@@ -164,7 +181,7 @@ contract HPPaymasterTest is WalletTestBase {
         paymaster.validatePaymasterUserOp(op, bytes32(0), 0.01 ether);
     }
 
-    function test_validate_revertsForUnregisteredWallet() public {
+    function test_validate_revertsForNonHPWallet() public {
         address stranger = makeAddr("strangerWallet");
         vm.prank(funder);
         paymaster.depositFor{ value: 1 ether }(stranger);
@@ -178,78 +195,108 @@ contract HPPaymasterTest is WalletTestBase {
 
     function test_validate_revertsOnInsufficientCredit() public {
         uint256 maxCost = 0.01 ether;
-        uint256 maxFeePerGas = 1 gwei;
-        uint256 required = _required(maxCost, maxFeePerGas);
+        uint256 reserved = _reserved(maxCost, 1 gwei);
 
-        // Fund just below the requirement (maxCost + postOp margin).
         vm.prank(funder);
-        paymaster.depositFor{ value: required - 1 }(address(wallet));
+        paymaster.depositFor{ value: reserved - 1 }(address(wallet));
 
-        UserOperation06 memory op = _sponsoredOp(address(wallet), maxFeePerGas);
-
+        UserOperation06 memory op = _sponsoredOp(address(wallet), 1 gwei);
         vm.prank(address(mockEntryPoint));
         vm.expectRevert(
-            abi.encodeWithSelector(
-                HPPaymaster.InsufficientGasCredit.selector, address(wallet), required - 1, required
-            )
+            abi.encodeWithSelector(HPPaymaster.InsufficientGasCredit.selector, address(wallet), reserved - 1, reserved)
         );
         paymaster.validatePaymasterUserOp(op, bytes32(0), maxCost);
     }
 
-    function test_validate_acceptsExactRequiredCredit() public {
+    /// @dev Audit #84970: a second validation in the same batch cannot reuse already-reserved credit.
+    function test_validate_batchReservationPreventsOverspend() public {
         uint256 maxCost = 0.01 ether;
-        uint256 maxFeePerGas = 1 gwei;
-        uint256 required = _required(maxCost, maxFeePerGas);
+        uint256 reserved = _reserved(maxCost, 1 gwei);
 
+        // Fund enough for one operation plus a sliver — not two.
         vm.prank(funder);
-        paymaster.depositFor{ value: required }(address(wallet));
+        paymaster.depositFor{ value: reserved + 1 }(address(wallet));
 
-        UserOperation06 memory op = _sponsoredOp(address(wallet), maxFeePerGas);
+        // First op validates and reserves.
+        _validate(address(wallet), 1 gwei, maxCost);
+        assertEq(paymaster.gasCredit(address(wallet)), 1);
 
+        // Second op in the same batch is rejected: the credit was already reserved.
+        UserOperation06 memory op2 = _sponsoredOp(address(wallet), 1 gwei);
         vm.prank(address(mockEntryPoint));
-        (, uint256 validationData) = paymaster.validatePaymasterUserOp(op, bytes32(0), maxCost);
-
-        assertEq(validationData, 0);
+        vm.expectRevert(
+            abi.encodeWithSelector(HPPaymaster.InsufficientGasCredit.selector, address(wallet), 1, reserved)
+        );
+        paymaster.validatePaymasterUserOp(op2, bytes32(0), maxCost);
     }
 
     // --------------------------------------------
-    //  postOp accounting
+    //  postOp settlement (refund + correct fee rate)
     // --------------------------------------------
 
-    function test_postOp_deductsActualCostPlusMargin() public {
+    function test_postOp_chargesActualCostAndRefundsRemainder() public {
         vm.prank(funder);
         paymaster.depositFor{ value: 1 ether }(address(wallet));
 
-        uint256 gasPrice = 1 gwei;
-        uint256 actualGasCost = 0.001 ether;
-        uint256 expectedCharge = actualGasCost + paymaster.POST_OP_GAS() * gasPrice;
+        uint256 maxCost = 0.01 ether;
+        bytes memory context = _validate(address(wallet), 1 gwei, maxCost);
 
-        vm.txGasPrice(gasPrice);
+        uint256 actualGasCost = 0.001 ether;
+        uint256 expectedCharge = actualGasCost + paymaster.POST_OP_GAS() * 1 gwei; // basefee 0 => fee rate = 1 gwei
+
         vm.expectEmit(true, false, false, true, address(paymaster));
         emit GasCreditUsed(address(wallet), expectedCharge);
 
         vm.prank(address(mockEntryPoint));
-        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, abi.encode(address(wallet)), actualGasCost);
+        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, context, actualGasCost);
 
+        // Net effect across validate + postOp is exactly the actual charge.
         assertEq(paymaster.gasCredit(address(wallet)), 1 ether - expectedCharge);
         assertEq(paymaster.totalGasCredit(), 1 ether - expectedCharge);
     }
 
-    function test_postOp_clampsToRemainingCredit() public {
+    /// @dev Audit #84971: the postOp margin is priced at the userOp fee rate, never at tx.gasprice.
+    function test_postOp_usesUserOpFeeRateNotTxGasPrice() public {
         vm.prank(funder);
-        paymaster.depositFor{ value: 0.0001 ether }(address(wallet));
+        paymaster.depositFor{ value: 5 ether }(address(wallet));
 
+        uint256 maxFee = 100 gwei;
+        uint256 maxCost = 0.01 ether;
+        bytes memory context = _validate(address(wallet), maxFee, maxCost);
+
+        // Bundler submits at a far lower tx.gasprice; accounting must ignore it.
         vm.txGasPrice(1 gwei);
-        vm.prank(address(mockEntryPoint));
-        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, abi.encode(address(wallet)), 1 ether);
+        uint256 actualGasCost = 0.003 ether;
+        uint256 expectedCharge = actualGasCost + paymaster.POST_OP_GAS() * maxFee; // fee rate = min(maxFee, maxPriority+basefee) = 100 gwei
 
-        assertEq(paymaster.gasCredit(address(wallet)), 0);
-        assertEq(paymaster.totalGasCredit(), 0);
+        vm.prank(address(mockEntryPoint));
+        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, context, actualGasCost);
+
+        // Charged at the (higher) userOp fee rate, matching what the EntryPoint deducts — no shared-deposit
+        // deficit. Had it used tx.gasprice (1 gwei) the charge would have been far smaller.
+        assertEq(paymaster.gasCredit(address(wallet)), 5 ether - expectedCharge);
+        assertEq(paymaster.totalGasCredit(), 5 ether - expectedCharge);
+    }
+
+    /// @dev Safety net: a context whose reservation is below the computed charge clamps without underflow.
+    function test_postOp_clampsChargeToReservation() public {
+        vm.prank(funder);
+        paymaster.depositFor{ value: 1 ether }(address(wallet));
+
+        // Hand-crafted context with a tiny reservation and a huge actual cost.
+        bytes memory context = abi.encode(address(wallet), uint256(0.0001 ether), uint256(1 gwei), uint256(1 gwei));
+
+        vm.prank(address(mockEntryPoint));
+        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, context, 1 ether);
+
+        // charge clamped to the reservation => refund is zero, no revert, credit unchanged by this call.
+        assertEq(paymaster.gasCredit(address(wallet)), 1 ether);
     }
 
     function test_postOp_revertsWhenNotEntryPoint() public {
+        bytes memory context = abi.encode(address(wallet), uint256(1), uint256(1 gwei), uint256(1 gwei));
         vm.expectRevert(HPPaymaster.NotEntryPoint.selector);
-        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, abi.encode(address(wallet)), 1);
+        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, context, 1);
     }
 
     // --------------------------------------------
@@ -294,29 +341,26 @@ contract HPPaymasterTest is WalletTestBase {
     }
 
     function test_withdrawSurplus_onlyAboveUserCredits() public {
-        // 1 ether of user credit + 0.5 ether of accumulated margin (simulated via postOp clamp profits).
         vm.prank(funder);
         paymaster.depositFor{ value: 1 ether }(address(wallet));
 
-        // Burn 0.5 ether of credit without the EntryPoint deposit decreasing (mock keeps deposit constant),
-        // mimicking postOp margins accruing as surplus.
-        vm.txGasPrice(0);
+        // Run a full cycle; the consumed charge leaves the EntryPoint deposit above totalGasCredit (the mock
+        // doesn't actually pay gas), which is exactly the withdrawable surplus.
+        bytes memory context = _validate(address(wallet), 1 gwei, 0.6 ether);
         vm.prank(address(mockEntryPoint));
-        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, abi.encode(address(wallet)), 0.5 ether);
+        paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, context, 0.5 ether);
 
-        assertEq(paymaster.surplus(), 0.5 ether);
+        uint256 s = paymaster.surplus();
+        assertGt(s, 0);
 
-        // Withdrawing more than the surplus reverts: user credits are untouchable.
         address payable treasury = payable(makeAddr("treasury"));
         vm.prank(admin);
-        vm.expectRevert(
-            abi.encodeWithSelector(HPPaymaster.WithdrawExceedsSurplus.selector, 0.6 ether, 0.5 ether)
-        );
-        paymaster.withdrawSurplus(treasury, 0.6 ether);
+        vm.expectRevert(abi.encodeWithSelector(HPPaymaster.WithdrawExceedsSurplus.selector, s + 1, s));
+        paymaster.withdrawSurplus(treasury, s + 1);
 
         vm.prank(admin);
-        paymaster.withdrawSurplus(treasury, 0.5 ether);
-        assertEq(treasury.balance, 0.5 ether);
+        paymaster.withdrawSurplus(treasury, s);
+        assertEq(treasury.balance, s);
         assertEq(paymaster.surplus(), 0);
     }
 
@@ -325,29 +369,20 @@ contract HPPaymasterTest is WalletTestBase {
     // --------------------------------------------
 
     function test_fullSponsorshipFlow() public {
-        // 1. Deposit-skim leg funds the user's gas credit.
         vm.prank(funder);
         paymaster.depositFor{ value: 0.1 ether }(address(wallet));
 
-        // 2. Bundler-side validation succeeds.
-        UserOperation06 memory op = _sponsoredOp(address(wallet), 1 gwei);
-        uint256 maxCost = 0.005 ether;
+        bytes memory context = _validate(address(wallet), 1 gwei, 0.005 ether);
 
-        vm.prank(address(mockEntryPoint));
-        (bytes memory context,) = paymaster.validatePaymasterUserOp(op, bytes32(0), maxCost);
-
-        // 3. Post-execution accounting charges actual cost (less than maxCost) plus margin.
         uint256 actualGasCost = 0.002 ether;
-        vm.txGasPrice(1 gwei);
         vm.prank(address(mockEntryPoint));
         paymaster.postOp(IPaymaster06.PostOpMode.opSucceeded, context, actualGasCost);
 
         uint256 charged = actualGasCost + paymaster.POST_OP_GAS() * 1 gwei;
         assertEq(paymaster.gasCredit(address(wallet)), 0.1 ether - charged);
 
-        // 4. Remaining credit still sponsors future ops.
-        vm.prank(address(mockEntryPoint));
-        (, uint256 validationData) = paymaster.validatePaymasterUserOp(op, bytes32(0), maxCost);
-        assertEq(validationData, 0);
+        // Remaining credit still sponsors future ops.
+        _validate(address(wallet), 1 gwei, 0.005 ether);
+        assertEq(paymaster.gasCredit(address(wallet)), 0.1 ether - charged - _reserved(0.005 ether, 1 gwei));
     }
 }

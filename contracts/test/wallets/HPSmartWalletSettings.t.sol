@@ -13,6 +13,7 @@ contract HPSmartWalletSettingsTest is WalletTestBase {
 
     event DefaultCryptoUpdated(DefaultCrypto indexed previous, DefaultCrypto indexed current);
     event DefaultStablecoinUpdated(DefaultStablecoin indexed previous, DefaultStablecoin indexed current);
+    event AccountSetUpdated(address indexed positionManager, address indexed vaultManager);
 
     function setUp() public override {
         super.setUp();
@@ -30,6 +31,57 @@ contract HPSmartWalletSettingsTest is WalletTestBase {
         (DefaultCrypto crypto, DefaultStablecoin stablecoin) = wallet.walletSettings();
         assertEq(uint8(crypto), uint8(DefaultCrypto.ETH));
         assertEq(uint8(stablecoin), uint8(DefaultStablecoin.TGBP));
+    }
+
+    /// @dev Audit #84983: init reports the real previous value (enum zero = BTC), not ETH.
+    function test_initialize_emitsCorrectPreviousCryptoValue() public {
+        vm.expectEmit(true, true, false, false);
+        emit DefaultCryptoUpdated(DefaultCrypto.BTC, DefaultCrypto.ETH);
+        // A fresh wallet at a new nonce re-runs initialize during creation.
+        _createWallet(makeAddr("freshOwner"), 1);
+    }
+
+    // --------------------------------------------
+    //  Account set (PositionManager / VaultManager)
+    // --------------------------------------------
+
+    function test_accountSet_defaultsToZero() public view {
+        (address pm, address vault) = wallet.accountSet();
+        assertEq(pm, address(0));
+        assertEq(vault, address(0));
+    }
+
+    function test_setAccountSet_byOwner() public {
+        address pm = makeAddr("positionManager");
+        address vault = makeAddr("vaultManager");
+
+        vm.expectEmit(true, true, false, false, address(wallet));
+        emit AccountSetUpdated(pm, vault);
+
+        vm.prank(ownerEOA);
+        wallet.setAccountSet(pm, vault);
+
+        (address pmOut, address vaultOut) = wallet.accountSet();
+        assertEq(pmOut, pm);
+        assertEq(vaultOut, vault);
+    }
+
+    function test_setAccountSet_viaEntryPointExecuteSelfCall() public {
+        address pm = makeAddr("positionManager");
+        address vault = makeAddr("vaultManager");
+
+        vm.prank(entryPointAddr);
+        wallet.execute(address(wallet), 0, abi.encodeCall(HPSmartWallet.setAccountSet, (pm, vault)));
+
+        (address pmOut, address vaultOut) = wallet.accountSet();
+        assertEq(pmOut, pm);
+        assertEq(vaultOut, vault);
+    }
+
+    function test_setAccountSet_revertsForNonOwner() public {
+        vm.prank(makeAddr("stranger"));
+        vm.expectRevert(MultiOwnable.Unauthorized.selector);
+        wallet.setAccountSet(makeAddr("pm"), makeAddr("vault"));
     }
 
     // --------------------------------------------

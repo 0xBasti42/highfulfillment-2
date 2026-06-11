@@ -25,12 +25,16 @@ contract HPSmartWalletUpgradeTest is WalletTestBase {
         implementationV2 = new HPSmartWalletV2(address(provider));
     }
 
-    function test_upgrade_preservesOwnersAndSettings() public {
+    function test_upgrade_preservesOwnersSettingsAndAccountSet() public {
         address secondOwner = makeAddr("secondOwner");
+        address pm = makeAddr("positionManager");
+        address vault = makeAddr("vaultManager");
+
         vm.startPrank(ownerEOA);
         wallet.addOwnerAddress(secondOwner);
         wallet.setDefaultCrypto(DefaultCrypto.BTC);
         wallet.setDefaultStablecoin(DefaultStablecoin.EURC);
+        wallet.setAccountSet(pm, vault);
 
         wallet.upgradeToAndCall(address(implementationV2), "");
         vm.stopPrank();
@@ -48,20 +52,19 @@ contract HPSmartWalletUpgradeTest is WalletTestBase {
         assertEq(uint8(wallet.defaultStablecoin()), uint8(DefaultStablecoin.EURC));
         assertEq(wallet.defaultCryptoAddress(), cbBTC);
         assertEq(wallet.defaultStablecoinAddress(), eurc);
+
+        // AccountSet storage preserved.
+        (address pmAfter, address vaultAfter) = wallet.accountSet();
+        assertEq(pmAfter, pm);
+        assertEq(vaultAfter, vault);
     }
 
-    function test_upgrade_registryStateUnaffected() public {
+    function test_upgrade_factoryFlagUnaffected() public {
         vm.prank(ownerEOA);
         wallet.upgradeToAndCall(address(implementationV2), "");
 
-        assertTrue(registry.isRegisteredWallet(address(wallet)));
-        assertEq(registry.walletOf(ownerEOA), address(wallet));
-
-        // Owner sync keeps working post-upgrade.
-        address newOwner = makeAddr("newOwner");
-        vm.prank(ownerEOA);
-        wallet.addOwnerAddress(newOwner);
-        assertEq(registry.walletOf(newOwner), address(wallet));
+        // The factory's wallet-keyed legitimacy flag is independent of the wallet implementation.
+        assertTrue(factory.isHPWallet(address(wallet)));
     }
 
     function test_upgrade_revertsForNonOwner() public {

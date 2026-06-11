@@ -7,17 +7,19 @@ import { UserOperation06 } from "@account-abstraction/legacy/v06/UserOperation06
 
 import { AddressBook } from "@core/AddressBook.sol";
 
-import { IHPWalletRegistry } from "./interfaces/IHPWalletRegistry.sol";
+import { IHPWalletFactory } from "./interfaces/IHPWalletFactory.sol";
 
 /// @title HPPaymaster
-/// @notice ERC-4337 v0.6 deposit paymaster: sponsors gas for registered HPSmartWallets out of per-wallet ETH
-///         credits. Credits are funded via `depositFor` (deposit-skim flow, future deposit router, or treasury
-///         top-up) and the backing ETH lives as this contract's deposit inside the EntryPoint.
-/// @dev Validation-phase rules (ERC-7562):
-///      - `registry.isRegisteredWallet[sender]` and `gasCredit[sender]` are sender-associated storage — allowed.
-///      - The AddressProvider must NOT be read during validation, so the registry address is cached in this
-///        contract's own storage (allowed while staked) and refreshed permissionlessly via `syncRegistry`.
-///      Deployment order: registry -> paymaster (constructor resolves WALLET_REGISTRY), then `addStake` and an
+/// @notice ERC-4337 v0.6 deposit paymaster: sponsors gas for HP wallets out of per-wallet ETH credits. Credits
+///         are funded via `depositFor` (deposit-skim flow, deposit router, or treasury top-up) and the backing
+///         ETH lives as this contract's deposit inside the EntryPoint.
+/// @dev Validation-phase rules (ERC-7562), all relying on this paymaster being STAKED:
+///      - `walletFactory.isHPWallet[sender]` is sender-associated storage in another contract — allowed.
+///      - `gasCredit[sender]` (sender-associated) and `totalGasCredit` (own storage) are written during
+///        validation to *reserve* the operation's cost; a staked entity may write its own storage.
+///      - The AddressProvider must NOT be read during validation, so the factory address is cached in this
+///        contract's storage and refreshed permissionlessly via `syncFactory`.
+///      Deployment order: factory -> paymaster (constructor resolves WALLET_FACTORY), then `addStake` and an
 ///      initial `depositFor`/EntryPoint deposit before the first sponsored op.
 contract HPPaymaster is IPaymaster06, AddressBook {
     // --------------------------------------------
@@ -30,11 +32,12 @@ contract HPPaymaster is IPaymaster06, AddressBook {
     IEntryPoint public immutable entryPoint;
 
     /// @dev Cached so validation never touches AddressProvider storage (see contract natspec).
-    IHPWalletRegistry public registry;
+    IHPWalletFactory public walletFactory;
 
     mapping(address wallet => uint256 creditWei) public gasCredit;
 
-    /// @dev Sum of all outstanding credits; EntryPoint deposit above this is withdrawable surplus.
+    /// @dev Sum of all outstanding credits; invariant `entryPoint.balanceOf(this) >= totalGasCredit` is
+    ///      preserved because each operation reserves its full cost in validation before any settlement.
     uint256 public totalGasCredit;
 
     // --------------------------------------------
@@ -43,7 +46,7 @@ contract HPPaymaster is IPaymaster06, AddressBook {
 
     event GasCreditDeposited(address indexed funder, address indexed wallet, uint256 amount);
     event GasCreditUsed(address indexed wallet, uint256 amount);
-    event RegistrySynced(address indexed registry);
+    event FactorySynced(address indexed walletFactory);
     event SurplusWithdrawn(address indexed to, uint256 amount);
 
     error NotEntryPoint();
@@ -78,14 +81,14 @@ contract HPPaymaster is IPaymaster06, AddressBook {
     constructor(address addressProvider_, address entryPoint_) AddressBook(addressProvider_) {
         if (entryPoint_ == address(0)) revert ZeroEntryPoint();
         entryPoint = IEntryPoint(entryPoint_);
-        syncRegistry();
+        syncFactory();
     }
 
-    /// @notice Re-resolves the registry from the AddressProvider. Permissionless: the provider is the source
-    ///         of truth and its mutations are already role-gated.
-    function syncRegistry() public {
-        registry = IHPWalletRegistry(_getAddress(_addressKey("WALLET_REGISTRY")));
-        emit RegistrySynced(address(registry));
+    /// @notice Re-resolves the wallet factory from the AddressProvider. Permissionless: the provider is the
+    ///         source of truth and its mutations are already role-gated.
+    function syncFactory() public {
+        walletFactory = IHPWalletFactory(_getAddress(_addressKey("WALLET_FACTORY")));
+        emit FactorySynced(address(walletFactory));
     }
 
     // --------------------------------------------
@@ -112,39 +115,53 @@ contract HPPaymaster is IPaymaster06, AddressBook {
     // --------------------------------------------
 
     /// @inheritdoc IPaymaster06
+    /// @dev Reserves the operation's full worst-case cost (`maxCost` + postOp margin priced at `maxFeePerGas`)
+    ///      by debiting `gasCredit[sender]` here, so the same credit cannot be approved twice within one
+    ///      EntryPoint batch. `postOp` refunds the unused remainder. The reserved amount and the fee caps are
+    ///      carried in `context` for settlement.
     function validatePaymasterUserOp(UserOperation06 calldata userOp, bytes32, uint256 maxCost)
         external
-        view
         onlyEntryPoint
         returns (bytes memory context, uint256 validationData)
     {
         address sender = userOp.sender;
 
         // Wallet deployment (initCode) runs before paymaster validation, so freshly created wallets are
-        // already registered by the factory at this point.
-        if (!registry.isRegisteredWallet(sender)) revert WalletNotRegistered(sender);
+        // already flagged by the factory at this point.
+        if (!walletFactory.isHPWallet(sender)) revert WalletNotRegistered(sender);
 
-        uint256 required = maxCost + POST_OP_GAS * userOp.maxFeePerGas;
+        uint256 reserved = maxCost + POST_OP_GAS * userOp.maxFeePerGas;
         uint256 credit = gasCredit[sender];
-        if (credit < required) revert InsufficientGasCredit(sender, credit, required);
+        if (credit < reserved) revert InsufficientGasCredit(sender, credit, reserved);
 
-        return (abi.encode(sender), 0);
+        unchecked {
+            gasCredit[sender] = credit - reserved;
+            totalGasCredit -= reserved;
+        }
+
+        return (abi.encode(sender, reserved, userOp.maxFeePerGas, userOp.maxPriorityFeePerGas), 0);
     }
 
     /// @inheritdoc IPaymaster06
-    /// @dev Never reverts: a postOp revert would force the EntryPoint to re-execute in `postOpReverted` mode.
-    ///      The charge is clamped to the remaining credit; validation guarantees the clamp is a no-op in
-    ///      practice (credit covered maxCost + margin).
+    /// @dev Never reverts (a revert would force a `postOpReverted` re-call). Charges `actualGasCost` plus the
+    ///      postOp margin priced at the *user-operation* fee rate the EntryPoint settles at —
+    ///      `min(maxFeePerGas, maxPriorityFeePerGas + basefee)`, not `tx.gasprice` — and refunds the reservation
+    ///      remainder to the wallet.
     function postOp(PostOpMode, bytes calldata context, uint256 actualGasCost) external onlyEntryPoint {
-        address wallet = abi.decode(context, (address));
+        (address wallet, uint256 reserved, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas) =
+            abi.decode(context, (address, uint256, uint256, uint256));
 
-        uint256 charge = actualGasCost + POST_OP_GAS * tx.gasprice;
-        uint256 credit = gasCredit[wallet];
-        if (charge > credit) charge = credit;
+        uint256 feePerGas = maxPriorityFeePerGas + block.basefee;
+        if (maxFeePerGas < feePerGas) feePerGas = maxFeePerGas;
+
+        uint256 charge = actualGasCost + POST_OP_GAS * feePerGas;
+        if (charge > reserved) charge = reserved;
+
+        uint256 refund = reserved - charge;
 
         unchecked {
-            gasCredit[wallet] = credit - charge;
-            totalGasCredit -= charge;
+            gasCredit[wallet] += refund;
+            totalGasCredit += refund;
         }
 
         emit GasCreditUsed(wallet, charge);

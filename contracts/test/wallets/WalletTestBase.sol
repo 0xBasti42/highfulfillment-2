@@ -8,14 +8,13 @@ import { UserOperation06 } from "@account-abstraction/legacy/v06/UserOperation06
 import { AddressProvider } from "@src/AddressProvider.sol";
 import { HPSmartWallet } from "@src/wallets/HPSmartWallet.sol";
 import { HPSmartWalletFactory } from "@src/wallets/HPSmartWalletFactory.sol";
-import { HPWalletRegistry } from "@src/wallets/HPWalletRegistry.sol";
 
-/// @notice Shared harness: AddressProvider with token keys, wallet implementation, registry, and factory wired
-///         exactly as they would be on Base (SETH key intentionally left unset until its wrapper is deployed).
+/// @notice Shared harness: AddressProvider with token keys, wallet implementation, and factory wired exactly as
+///         they would be on Base (SETH key intentionally left unset until its wrapper is deployed). The factory
+///         is also the wallet-legitimacy oracle; there is no separate registry.
 abstract contract WalletTestBase is Test {
     AddressProvider internal provider;
     HPSmartWallet internal walletImplementation;
-    HPWalletRegistry internal registry;
     HPSmartWalletFactory internal factory;
 
     address internal admin = makeAddr("admin");
@@ -46,13 +45,10 @@ abstract contract WalletTestBase is Test {
         vm.stopPrank();
 
         walletImplementation = new HPSmartWallet(address(provider));
-        registry = new HPWalletRegistry(address(provider));
         factory = new HPSmartWalletFactory(address(walletImplementation), address(provider));
 
-        vm.startPrank(admin);
-        provider.registerName("WALLET_REGISTRY", address(registry));
+        vm.prank(admin);
         provider.registerName("WALLET_FACTORY", address(factory));
-        vm.stopPrank();
     }
 
     // --------------------------------------------

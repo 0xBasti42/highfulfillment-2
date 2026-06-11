@@ -29,13 +29,17 @@ contract HPSmartWalletFactoryTest is WalletTestBase {
         assertEq(uint8(wallet.defaultStablecoin()), uint8(DefaultStablecoin.TGBP));
     }
 
-    function test_createAccount_registersInRegistry() public {
+    function test_createAccount_flagsAndEnumeratesWallet() public {
         HPSmartWallet wallet = _createWallet(ownerEOA, 0);
 
-        assertTrue(registry.isRegisteredWallet(address(wallet)));
-        assertEq(registry.walletOf(ownerEOA), address(wallet));
-        assertEq(registry.walletCount(), 1);
-        assertEq(registry.walletAt(0), address(wallet));
+        assertTrue(factory.isHPWallet(address(wallet)));
+        assertEq(factory.walletCount(), 1);
+        assertEq(factory.walletAt(0), address(wallet));
+        assertEq(factory.getAllWallets()[0], address(wallet));
+    }
+
+    function test_isHPWallet_falseForArbitraryAddress() public {
+        assertFalse(factory.isHPWallet(makeAddr("notAWallet")));
     }
 
     function test_createAccount_emitsAccountCreated() public {
@@ -55,7 +59,7 @@ contract HPSmartWalletFactoryTest is WalletTestBase {
         HPSmartWallet second = factory.createAccount(owners, 0);
 
         assertEq(address(first), address(second));
-        assertEq(registry.walletCount(), 1);
+        assertEq(factory.walletCount(), 1);
     }
 
     function test_createAccount_differentNonceDifferentAddress() public {

@@ -11,7 +11,6 @@ import { WebAuthn } from "@webauthn-sol/WebAuthn.sol";
 import { AddressBook } from "@core/AddressBook.sol";
 
 import { DefaultCrypto, DefaultStablecoin } from "./types/HPWalletTypes.sol";
-import { IHPWalletRegistry } from "./interfaces/IHPWalletRegistry.sol";
 import { MultiOwnable } from "./base/MultiOwnable.sol";
 import { UserOperation06Hash } from "./base/UserOperation06Hash.sol";
 import { WalletERC1271 } from "./base/WalletERC1271.sol";
@@ -23,11 +22,22 @@ struct WalletSettingsStorage {
     DefaultStablecoin defaultStablecoin;
 }
 
+/// @notice User-specific manager contracts, co-located in the wallet (authoritative; no central registry).
+/// @dev Read by the frontend in a single `eth_call` via `accountSet()`. Populated by an owner post-creation
+///      (or by a future factory orchestration self-call once PositionManager/VaultManager are designed); not an
+///      `initialize` arg, so it cannot influence the counterfactual address.
+/// @custom:storage-location erc7201:highpotential.storage.AccountSet
+struct AccountSetStorage {
+    address positionManager;
+    address vaultManager;
+}
+
 /// @title HPSmartWallet
 /// @notice ERC-4337 v0.6 smart account modeled on Coinbase Smart Wallet: multi-owner (EOA + passkey), ERC-1271, UUPS.
-/// @dev Extends the base account with user settings (DefaultCrypto / DefaultStablecoin) in ERC-7201 namespaced
-///      storage, AddressProvider-based token resolution, and HPWalletRegistry owner-index synchronization.
-///      EntryPoint v0.6 default below; override `entryPoint()` per-chain if needed.
+/// @dev Extends the base account with user settings (DefaultCrypto / DefaultStablecoin) and the user's AccountSet
+///      (PositionManager / VaultManager) in ERC-7201 namespaced storage, plus AddressProvider-based token
+///      resolution. Owner -> wallet discovery is handled off-chain by Turnkey; legitimacy is asserted by the
+///      factory's `isHPWallet` flag. EntryPoint v0.6 default below; override `entryPoint()` per-chain if needed.
 contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeable, Receiver, AddressBook {
     struct SignatureWrapper {
         uint256 ownerIndex;
@@ -46,9 +56,13 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
     /// @dev keccak256(abi.encode(uint256(keccak256("highpotential.storage.WalletSettings")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant _WALLET_SETTINGS_STORAGE_LOCATION =
         0xde9abc39f8ba6496385be7b2e06f782787ee07b9096c13bc6574d61d02346900;
+    /// @dev keccak256(abi.encode(uint256(keccak256("highpotential.storage.AccountSet")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant _ACCOUNT_SET_STORAGE_LOCATION =
+        0xd2d10004138f2882870e52b168c3ad025ba8daea9d7df73d3caa86e3d34a7b00;
 
     event DefaultCryptoUpdated(DefaultCrypto indexed previous, DefaultCrypto indexed current);
     event DefaultStablecoinUpdated(DefaultStablecoin indexed previous, DefaultStablecoin indexed current);
+    event AccountSetUpdated(address indexed positionManager, address indexed vaultManager);
 
     error Initialized();
     error SelectorNotAllowed(bytes4 selector);
@@ -97,10 +111,12 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
         // Seed user settings to platform defaults (mirrors the UI defaults); the user can update them post-creation.
         // Deliberately not initializer args: the counterfactual address must depend only on owners + nonce, and a
         // front-runner of `createAccount` must not be able to influence wallet state.
+        // Previous values are the enum zero values (BTC / TGBP) — the actual pre-init state — so off-chain
+        // indexers reconstructing preference history see the correct transition.
         WalletSettingsStorage storage $ = _getWalletSettingsStorage();
         $.defaultCrypto = DefaultCrypto.ETH;
         $.defaultStablecoin = DefaultStablecoin.TGBP;
-        emit DefaultCryptoUpdated(DefaultCrypto.ETH, DefaultCrypto.ETH);
+        emit DefaultCryptoUpdated(DefaultCrypto.BTC, DefaultCrypto.ETH);
         emit DefaultStablecoinUpdated(DefaultStablecoin.TGBP, DefaultStablecoin.TGBP);
     }
 
@@ -169,33 +185,28 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
     }
 
     // --------------------------------------------
-    //  Registry synchronization
+    //  Account set (user-specific managers)
     // --------------------------------------------
 
-    /// @dev Keeps the central owner->wallet index accurate when owners are added post-creation.
-    ///      Skipped while the registry key is unset or this wallet is unregistered (implementation constructor,
-    ///      `initialize` before the factory registers — the factory indexes the initial owners itself).
-    function _addOwnerAtIndex(bytes memory owner, uint256 index) internal virtual override {
-        super._addOwnerAtIndex(owner, index);
-
-        IHPWalletRegistry registry = _registry();
-        if (address(registry) != address(0) && registry.isRegisteredWallet(address(this))) {
-            registry.addOwner(owner);
-        }
+    /// @notice The user's PositionManager and VaultManager, in a single cheap read for the UI.
+    function accountSet() external view virtual returns (address positionManager, address vaultManager) {
+        AccountSetStorage storage $ = _getAccountSetStorage();
+        return ($.positionManager, $.vaultManager);
     }
 
-    function _removeOwnerAtIndex(uint256 index, bytes calldata owner) internal virtual override {
-        super._removeOwnerAtIndex(index, owner);
-
-        IHPWalletRegistry registry = _registry();
-        if (address(registry) != address(0) && registry.isRegisteredWallet(address(this))) {
-            registry.removeOwner(owner);
-        }
+    /// @notice Sets the user's manager contracts. Callable by an owner directly or via EntryPoint `execute`
+    ///         self-call.
+    function setAccountSet(address positionManager, address vaultManager) external virtual onlyOwner {
+        AccountSetStorage storage $ = _getAccountSetStorage();
+        $.positionManager = positionManager;
+        $.vaultManager = vaultManager;
+        emit AccountSetUpdated(positionManager, vaultManager);
     }
 
-    /// @dev Raw `get` (not `_getAddress`) so an unset WALLET_REGISTRY key never bricks owner management.
-    function _registry() internal view returns (IHPWalletRegistry) {
-        return IHPWalletRegistry(addressProvider.get(_addressKey("WALLET_REGISTRY")));
+    function _getAccountSetStorage() internal pure returns (AccountSetStorage storage $) {
+        assembly ("memory-safe") {
+            $.slot := _ACCOUNT_SET_STORAGE_LOCATION
+        }
     }
 
     // --------------------------------------------
@@ -289,7 +300,6 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
             functionSelector == MultiOwnable.addOwnerPublicKey.selector
                 || functionSelector == MultiOwnable.addOwnerAddress.selector
                 || functionSelector == MultiOwnable.removeOwnerAtIndex.selector
-                || functionSelector == MultiOwnable.removeLastOwner.selector
                 || functionSelector == UUPSUpgradeable.upgradeToAndCall.selector
         ) {
             return true;
@@ -306,6 +316,36 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
         }
     }
 
+    /// @notice ERC-1271 verification that always returns a selector, never reverts.
+    /// @dev Routes signature parsing through a self-`staticcall` so malformed signature blobs, stale/out-of-range
+    ///      owner indices, and malformed WebAuthn payloads surface as `0xffffffff` rather than a revert, honoring
+    ///      the ERC-1271 contract that failure is reported via the return value.
+    function isValidSignature(bytes32 hash, bytes calldata signature)
+        public
+        view
+        virtual
+        override
+        returns (bytes4)
+    {
+        try this.isValidSignatureExternal(replaySafeHash(hash), signature) returns (bool ok) {
+            return ok ? bytes4(0x1626ba7e) : bytes4(0xffffffff);
+        } catch {
+            return 0xffffffff;
+        }
+    }
+
+    /// @notice Self-only external wrapper enabling the `try/catch` in `isValidSignature`.
+    /// @dev `replaySafeHash` is already applied by the caller; do not re-wrap.
+    function isValidSignatureExternal(bytes32 replaySafeHash_, bytes calldata signature)
+        external
+        view
+        virtual
+        returns (bool)
+    {
+        if (msg.sender != address(this)) revert Unauthorized();
+        return _isValidSignature(replaySafeHash_, signature);
+    }
+
     function _isValidSignature(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -315,6 +355,11 @@ contract HPSmartWallet is WalletERC1271, IAccount06, MultiOwnable, UUPSUpgradeab
     {
         SignatureWrapper memory sigWrapper = abi.decode(signature, (SignatureWrapper));
         bytes memory ownerBytes = ownerAtIndex(sigWrapper.ownerIndex);
+
+        // Out-of-range or removed owner index: report failure rather than reverting.
+        if (ownerBytes.length == 0) {
+            return false;
+        }
 
         if (ownerBytes.length == 32) {
             if (uint256(bytes32(ownerBytes)) > type(uint160).max) {
